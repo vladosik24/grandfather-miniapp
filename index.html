@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Дід Україна</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Nunito:wght@400;600;700&display=swap');
+
+  :root {
+    --blue: #1a56c4;
+    --yellow: #f5c800;
+    --dark: #0d1b3e;
+    --card: #ffffff;
+    --bg: #f0f4ff;
+    --text: #0d1b3e;
+    --sub: #6b7a99;
+    --radius: 18px;
+    --shadow: 0 4px 24px rgba(26,86,196,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--blue) 100%);
+    padding: 20px 20px 70px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: var(--yellow);
+    border-radius: 50%;
+    opacity: 0.12;
+  }
+  .header::after {
+    content: '🇺🇦';
+    position: absolute;
+    top: 10px; right: 16px;
+    font-size: 32px;
+    opacity: 0.7;
+  }
+  .header-content { position: relative; z-index: 1; }
+  .avatar {
+    width: 64px; height: 64px;
+    background: var(--yellow);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(245,200,0,0.4);
+  }
+  .header h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .header p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+  }
+  .user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 13px;
+    color: #fff;
+    margin-top: 10px;
+  }
+
+  /* ── Nav ── */
+  .nav-wrap {
+    padding: 0 16px;
+    margin-top: -40px;
+    position: relative;
+    z-index: 10;
+  }
+  .nav {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 6px;
+    gap: 4px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .nav-btn .icon { font-size: 20px; }
+  .nav-btn .label { font-size: 11px; font-weight: 600; color: var(--sub); white-space: nowrap; }
+  .nav-btn.active { background: var(--blue); }
+  .nav-btn.active .label { color: #fff; }
+
+  /* ── Content ── */
+  .content {
+    padding: 16px;
+    padding-bottom: 20px;
+  }
+  .tab { display: none; }
+  .tab.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sub);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 18px 0 10px;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+  }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:active { transform: scale(0.97); background: #1245a8; }
+  .btn-yellow { background: var(--yellow); color: var(--dark); }
+  .btn-yellow:active { transform: scale(0.97); }
+  .btn-outline {
+    background: transparent;
+    color: var(--blue);
+    border: 2px solid var(--blue);
+  }
+  .btn-outline:active { background: var(--blue); color: #fff; }
+  .btn + .btn { margin-top: 10px; }
+
+  /* ── Game ── */
+  .word-display {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    text-align: center;
+    color: var(--dark);
+    padding: 20px;
+    background: linear-gradient(135deg, #e8f0ff, #fff8d6);
+    border-radius: 14px;
+    margin: 14px 0;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .keyboard {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .key {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 2px solid #e0e8ff;
+    background: #fff;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .key:active { transform: scale(0.9); }
+  .key.correct { background: #22c55e; color: #fff; border-color: #22c55e; }
+  .key.wrong { background: #ef4444; color: #fff; border-color: #ef4444; }
+  .key.used { opacity: 0.3; pointer-events: none; }
+
+  /* ── Quiz ── */
+  .quiz-q {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    color: var(--dark);
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-opt {
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 2px solid #e0e8ff;
+    background: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+    color: var(--dark);
+  }
+  .quiz-opt:active { transform: scale(0.98); }
+  .quiz-opt.correct { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+  .quiz-opt.wrong { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+  .quiz-score {
+    background: linear-gradient(135deg, var(--dark), var(--blue));
+    color: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .quiz-score .score-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--yellow);
+  }
+
+  /* ── Top ── */
+  .top-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f4ff;
+  }
+  .top-item:last-child { border-bottom: none; }
+  .medal {
+    font-size: 24px;
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .top-name { font-weight: 700; font-size: 15px; flex: 1; }
+  .top-count {
+    font-size: 13px;
+    color: var(--sub);
+    font-weight: 600;
+  }
+  .top-bar {
+    height: 4px;
+    background: #e0e8ff;
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .top-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--yellow));
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+
+  /* ── Map ── */
+  .map-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .oblast-card {
+    background: linear-gradient(135deg, #e8f0ff, #fff);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  .oblast-card:active { border-color: var(--blue); transform: scale(0.97); }
+  .oblast-card .o-name { font-weight: 700; font-size: 13px; color: var(--dark); }
+  .oblast-card .o-icon { font-size: 24px; margin-bottom: 6px; }
+  .oblast-detail {
+    display: none;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    animation: fadeIn 0.3s ease;
+  }
+  .oblast-detail.show { display: block; }
+  .oblast-detail h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Profile ── */
+  .profile-header {
+    background: linear-gradient(135deg, var(--dark), var(--blue));
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 14px;
+  }
+  .profile-avatar {
+    width: 72px; height: 72px;
+    background: var(--yellow);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 12px;
+    box-shadow: 0 4px 20px rgba(245,200,0,0.4);
+  }
+  .profile-name {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+  }
+  .profile-id { font-size: 12px; opacity: 0.6; margin-top: 4px; }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--blue);
+  }
+  .stat-label { font-size: 12px; color: var(--sub); margin-top: 4px; }
+
+  /* ── Vote ── */
+  .poll-opt {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid #e0e8ff;
+  }
+  .poll-opt:active { border-color: var(--blue); }
+  .poll-opt.voted { border-color: var(--blue); background: #e8f0ff; pointer-events: none; }
+  .poll-opt-top { display: flex; justify-content: space-between; align-items: center; }
+  .poll-opt-name { font-weight: 700; font-size: 15px; }
+  .poll-opt-pct { font-weight: 700; font-size: 15px; color: var(--blue); }
+  .poll-bar {
+    height: 6px;
+    background: #e0e8ff;
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .poll-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--yellow));
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--dark);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .empty {
+    text-align: center;
+    color: var(--sub);
+    padding: 32px 0;
+    font-size: 14px;
+  }
+  .empty .e-icon { font-size: 48px; display: block; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-content">
+    <div class="avatar">👴</div>
+    <h1>Дід Україна</h1>
+    <p>Мудрий, веселий і завжди поруч</p>
+    <div class="user-badge">
+      <span>👤</span>
+      <span id="user-name">Гість</span>
+    </div>
+  </div>
+</div>
+
+<div class="nav-wrap">
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchTab('games', this)">
+      <span class="icon">🎮</span>
+      <span class="label">Ігри</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('top', this)">
+      <span class="icon">🏆</span>
+      <span class="label">Топ</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('map', this)">
+      <span class="icon">🗺</span>
+      <span class="label">Мапа</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('profile', this)">
+      <span class="icon">👤</span>
+      <span class="label">Профіль</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('vote', this)">
+      <span class="icon">🗳</span>
+      <span class="label">Голосування</span>
+    </button>
+  </nav>
+</div>
+
+<div class="content">
+
+  <!-- ══════════ ІГРИ ══════════ -->
+  <div class="tab active" id="tab-games">
+    <div class="section-title">Обери гру</div>
+
+    <div class="card" id="game-selector">
+      <div class="card-title">🎮 Ігри від Діда</div>
+      <button class="btn btn-primary" onclick="startWordGame()">🔤 Вгадай слово</button>
+      <button class="btn btn-yellow" onclick="startQuiz()">🇺🇦 Вікторина</button>
+      <button class="btn btn-outline" onclick="startOddOne()">🧩 Хто зайвий</button>
+    </div>
+
+    <!-- Вгадай слово -->
+    <div id="word-game" style="display:none">
+      <div class="card">
+        <div class="card-title">🔤 Вгадай слово</div>
+        <div style="text-align:center;font-size:13px;color:var(--sub)" id="word-hint">Відгадай українське слово</div>
+        <div class="word-display" id="word-display">_ _ _ _ _</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1;background:#e8f0ff;border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:11px;color:var(--sub)">Спроб</div>
+            <div style="font-family:'Unbounded',sans-serif;font-weight:700;font-size:18px;color:var(--blue)" id="tries-left">6</div>
+          </div>
+          <div style="flex:1;background:#fff8d6;border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:11px;color:var(--sub)">Букв</div>
+            <div style="font-family:'Unbounded',sans-serif;font-weight:700;font-size:18px;color:var(--dark)" id="word-len">?</div>
+          </div>
+        </div>
+        <div class="keyboard" id="keyboard"></div>
+        <button class="btn btn-outline" style="margin-top:12px" onclick="showGameSelector()">← Назад</button>
+      </div>
+    </div>
+
+    <!-- Вікторина -->
+    <div id="quiz-game" style="display:none">
+      <div class="quiz-score" id="quiz-score-card" style="display:none">
+        <div style="font-size:14px;opacity:0.8">Результат</div>
+        <div class="score-num" id="final-score">0/0</div>
+        <div style="font-size:13px;margin-top:4px" id="score-msg"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin:0">🇺🇦 Вікторина</div>
+          <div style="font-size:13px;color:var(--sub)" id="quiz-progress">1/8</div>
+        </div>
+        <div class="quiz-q" id="quiz-q">Завантаження...</div>
+        <div class="quiz-options" id="quiz-opts"></div>
+        <button class="btn btn-outline" style="margin-top:12px" onclick="showGameSelector()">← Назад</button>
+      </div>
+    </div>
+
+    <!-- Хто зайвий -->
+    <div id="odd-game" style="display:none">
+      <div class="card">
+        <div class="card-title">🧩 Хто зайвий?</div>
+        <div class="quiz-q" id="odd-q">...</div>
+        <div class="quiz-options" id="odd-opts"></div>
+        <div id="odd-explain" style="display:none;margin-top:12px;padding:12px;background:#f0f4ff;border-radius:12px;font-size:14px;line-height:1.5"></div>
+        <button class="btn btn-outline" style="margin-top:12px" onclick="showGameSelector()">← Назад</button>
+        <button class="btn btn-primary" style="margin-top:8px;display:none" id="odd-next" onclick="nextOdd()">Наступне →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ТОП ══════════ -->
+  <div class="tab" id="tab-top">
+    <div class="section-title">Активність чату</div>
+    <div class="card">
+      <div class="card-title">🏆 Топ учасників</div>
+      <div id="top-list">
+        <div class="empty"><span class="e-icon">📊</span>Дані завантажуються...</div>
+      </div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff">
+      <div style="font-size:13px;opacity:0.7">👴 Дід каже:</div>
+      <div style="font-size:15px;font-weight:700;margin-top:6px;line-height:1.5">
+        «Активність у чаті — це добре! Пиши частіше і потрапиш у топ!»
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ МАПА ══════════ -->
+  <div class="tab" id="tab-map">
+    <div class="section-title">Цікаві факти</div>
+    <div id="oblast-detail" class="oblast-detail">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span id="oblast-icon" style="font-size:36px">🗺</span>
+        <h3 id="oblast-title"></h3>
+      </div>
+      <p id="oblast-text" style="font-size:14px;line-height:1.6;color:var(--sub)"></p>
+      <button class="btn btn-outline" style="margin-top:14px" onclick="closeOblast()">← Назад</button>
+    </div>
+    <div id="oblast-grid" class="map-grid"></div>
+  </div>
+
+  <!-- ══════════ ПРОФІЛЬ ══════════ -->
+  <div class="tab" id="tab-profile">
+    <div class="profile-header">
+      <div class="profile-avatar" id="p-avatar">👤</div>
+      <div class="profile-name" id="p-name">Гість</div>
+      <div class="profile-id" id="p-id">ID: —</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-games">0</div>
+        <div class="stat-label">Ігор зіграно</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-score">0%</div>
+        <div class="stat-label">Правильних відповідей</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-words">0</div>
+        <div class="stat-label">Слів відгадано</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">🇺🇦</div>
+        <div class="stat-label">Українець!</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎖️ Досягнення</div>
+      <div id="achievements">
+        <div class="top-item">
+          <span class="medal">🌱</span>
+          <div>
+            <div class="top-name">Перший крок</div>
+            <div class="top-count">Відкрив Mini App</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ГОЛОСУВАННЯ ══════════ -->
+  <div class="tab" id="tab-vote">
+    <div class="section-title">Поточне голосування</div>
+    <div class="card" id="poll-card">
+      <div class="card-title">🗳 Питання від Діда</div>
+      <div id="poll-q" style="font-size:15px;font-weight:700;margin-bottom:16px;line-height:1.5"></div>
+      <div id="poll-opts"></div>
+      <div id="poll-total" style="font-size:12px;color:var(--sub);text-align:center;margin-top:10px"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Telegram WebApp ──
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+const user = tg?.initDataUnsafe?.user;
+const userName = user?.first_name || 'Гість';
+const userId = user?.id || 0;
+
+document.getElementById('user-name').textContent = userName;
+document.getElementById('p-name').textContent = userName + (user?.last_name ? ' ' + user.last_name : '');
+document.getElementById('p-id').textContent = 'ID: ' + (userId || '—');
+
+// Ініціали для аватара
+const initials = userName.charAt(0).toUpperCase();
+document.getElementById('p-avatar').textContent = initials || '👤';
+
+// ── Toast ──
+function showToast(msg, ms=2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+// ── Tabs ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (tg) tg.HapticFeedback?.impactOccurred('light');
+}
+
+// ── Локальна статистика ──
+let stats = JSON.parse(localStorage.getItem('dido_stats') || '{"games":0,"correct":0,"total":0,"words":0}');
+function saveStats() { localStorage.setItem('dido_stats', JSON.stringify(stats)); }
+function updateStatUI() {
+  document.getElementById('stat-games').textContent = stats.games;
+  document.getElementById('stat-words').textContent = stats.words;
+  const pct = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
+  document.getElementById('stat-score').textContent = pct + '%';
+}
+updateStatUI();
+
+// ════════════════════════════════
+// ІГРИ
+// ════════════════════════════════
+
+function showGameSelector() {
+  document.getElementById('game-selector').style.display = 'block';
+  document.getElementById('word-game').style.display = 'none';
+  document.getElementById('quiz-game').style.display = 'none';
+  document.getElementById('odd-game').style.display = 'none';
+}
+
+// ── Вгадай слово ──
+const words = [
+  {word:'сонце', hint:'Небесне тіло'},
+  {word:'земля', hint:'Під ногами'},
+  {word:'козак', hint:'Воїн України'},
+  {word:'мова', hint:'Рідна і солодка'},
+  {word:'воля', hint:'Без неї не можна'},
+  {word:'калина', hint:'Символ України'},
+  {word:'рушник', hint:'Вишитий оберіг'},
+  {word:'вареник', hint:'Улюблена страва Діда'},
+  {word:'хата', hint:'Рідний дім'},
+  {word:'степ', hint:'Безкрай і простір'},
+  {word:'Дніпро', hint:'Найбільша річка'},
+  {word:'верба', hint:'Дерево журби і краси'},
+];
+let currentWord = '', guessed = [], wrongLetters = [], triesLeft = 6;
+
+function startWordGame() {
+  document.getElementById('game-selector').style.display = 'none';
+  document.getElementById('word-game').style.display = 'block';
+  const w = words[Math.floor(Math.random() * words.length)];
+  currentWord = w.word.toLowerCase();
+  guessed = [];
+  wrongLetters = [];
+  triesLeft = 6;
+  document.getElementById('word-hint').textContent = '💡 Підказка: ' + w.hint;
+  document.getElementById('word-len').textContent = currentWord.length;
+  renderWord();
+  renderKeyboard();
+  stats.games++; saveStats(); updateStatUI();
+}
+
+function renderWord() {
+  const display = currentWord.split('').map(c => guessed.includes(c) ? c.toUpperCase() : '_').join(' ');
+  document.getElementById('word-display').textContent = display;
+  document.getElementById('tries-left').textContent = triesLeft;
+  if (!display.includes('_')) {
+    setTimeout(() => {
+      showToast('🎉 Вітаю! Ти відгадав слово!');
+      stats.words++; saveStats(); updateStatUI();
+    }, 200);
+  } else if (triesLeft <= 0) {
+    setTimeout(() => showToast('❌ Слово було: ' + currentWord.toUpperCase(), 3000), 200);
+  }
+}
+
+function renderKeyboard() {
+  const letters = 'абвгґдеєжзиіїйклмнопрстуфхцчшщьюя';
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+  letters.split('').forEach(l => {
+    const btn = document.createElement('button');
+    btn.className = 'key';
+    btn.textContent = l.toUpperCase();
+    if (guessed.includes(l)) btn.classList.add('correct');
+    if (wrongLetters.includes(l)) btn.classList.add('wrong');
+    if (guessed.includes(l) || wrongLetters.includes(l)) btn.classList.add('used');
+    btn.onclick = () => guessLetter(l);
+    kb.appendChild(btn);
+  });
+}
+
+function guessLetter(l) {
+  if (triesLeft <= 0 || !currentWord.includes('_') === false) return;
+  if (currentWord.includes(l)) {
+    guessed.push(l);
+    stats.correct++; stats.total++;
+  } else {
+    wrongLetters.push(l);
+    triesLeft--;
+    stats.total++;
+  }
+  saveStats();
+  renderWord();
+  renderKeyboard();
+  if (tg) tg.HapticFeedback?.impactOccurred(currentWord.includes(l) ? 'medium' : 'rigid');
+}
+
+// ── Вікторина ──
+const quizData = [
+  {q:'Яке місто є столицею України?', opts:['Львів','Київ','Одеса','Харків'], correct:1},
+  {q:'Яка найдовша річка України?', opts:['Дністер','Десна','Дніпро','Буг'], correct:2},
+  {q:'Хто написав «Кобзар»?', opts:['Іван Франко','Леся Українка','Шевченко','Котляревський'], correct:2},
+  {q:'Скільки областей в Україні?', opts:['20','24','25','27'], correct:1},
+  {q:'Яка гора найвища в Україні?', opts:['Говерла','Петрос','Пікуй','Чорногора'], correct:0},
+  {q:'Коли Україна отримала незалежність?', opts:['1990','1991','1992','1993'], correct:1},
+  {q:'Яке свято 14 жовтня?', opts:['День прапора','День ЗСУ','День захисників','Покрова'], correct:2},
+  {q:'Що зображено на гербі України?', opts:['Орел','Тризуб','Лев','Козак'], correct:1},
+];
+let qIdx = 0, qScore = 0;
+
+function startQuiz() {
+  document.getElementById('game-selector').style.display = 'none';
+  document.getElementById('quiz-game').style.display = 'block';
+  document.getElementById('quiz-score-card').style.display = 'none';
+  qIdx = 0; qScore = 0;
+  stats.games++; saveStats(); updateStatUI();
+  showQuizQ();
+}
+
+function showQuizQ() {
+  if (qIdx >= quizData.length) {
+    document.getElementById('quiz-score-card').style.display = 'block';
+    document.getElementById('final-score').textContent = qScore + '/' + quizData.length;
+    const msgs = ['Молодець! 🌟','Чудово! 💙','Ти справжній знавець! 🏆','Дід пишається! 👴'];
+    document.getElementById('score-msg').textContent = msgs[Math.min(Math.floor(qScore/2), msgs.length-1)];
+    document.getElementById('quiz-q').textContent = '🎉 Вікторина завершена!';
+    document.getElementById('quiz-opts').innerHTML = '<button class="btn btn-primary" onclick="startQuiz()">Ще раз</button>';
+    return;
+  }
+  const q = quizData[qIdx];
+  document.getElementById('quiz-q').textContent = q.q;
+  document.getElementById('quiz-progress').textContent = (qIdx+1) + '/' + quizData.length;
+  const opts = document.getElementById('quiz-opts');
+  opts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-opt';
+    btn.textContent = o;
+    btn.onclick = () => answerQuiz(i, btn, q);
+    opts.appendChild(btn);
+  });
+}
+
+function answerQuiz(i, btn, q) {
+  document.querySelectorAll('.quiz-opt').forEach(b => b.onclick = null);
+  stats.total++;
+  if (i === q.correct) {
+    btn.classList.add('correct');
+    qScore++;
+    stats.correct++;
+    showToast('✅ Правильно!');
+    if (tg) tg.HapticFeedback?.notificationOccurred('success');
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.quiz-opt')[q.correct].classList.add('correct');
+    showToast('❌ Неправильно');
+    if (tg) tg.HapticFeedback?.notificationOccurred('error');
+  }
+  saveStats(); updateStatUI();
+  qIdx++;
+  setTimeout(showQuizQ, 1200);
+}
+
+// ── Хто зайвий ──
+const oddData = [
+  {q:'Що зайве?', opts:['Київ','Львів','Варшава','Харків'], correct:2, explain:'Варшава — столиця Польщі, решта — міста України.'},
+  {q:'Що зайве?', opts:['Вареники','Деруни','Піца','Борщ'], correct:2, explain:'Піца — італійська страва, решта — українські.'},
+  {q:'Що зайве?', opts:['Шевченко','Франко','Пушкін','Леся Українка'], correct:2, explain:'Пушкін — російський поет, решта — українські письменники.'},
+  {q:'Що зайве?', opts:['Калина','Соняшник','Тюльпан','Верба'], correct:2, explain:'Тюльпан — символ Нідерландів, решта — символи України.'},
+  {q:'Що зайве?', opts:['Бандура','Кобза','Балалайка','Сопілка'], correct:2, explain:'Балалайка — російський інструмент, решта — українські.'},
+  {q:'Що зайве?', opts:['Дніпро','Дністер','Волга','Десна'], correct:2, explain:'Волга — річка в Росії, решта течуть в Україні.'},
+  {q:'Що зайве?', opts:['Говерла','Петрос','Монблан','Пікуй'], correct:2, explain:'Монблан — у Франції/Італії, решта — вершини в Карпатах.'},
+];
+let oddIdx = 0;
+
+function startOddOne() {
+  document.getElementById('game-selector').style.display = 'none';
+  document.getElementById('odd-game').style.display = 'block';
+  oddIdx = Math.floor(Math.random() * oddData.length);
+  stats.games++; saveStats(); updateStatUI();
+  showOdd();
+}
+
+function showOdd() {
+  const q = oddData[oddIdx];
+  document.getElementById('odd-q').textContent = q.q;
+  document.getElementById('odd-explain').style.display = 'none';
+  document.getElementById('odd-next').style.display = 'none';
+  const opts = document.getElementById('odd-opts');
+  opts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-opt';
+    btn.textContent = o;
+    btn.onclick = () => answerOdd(i, btn, q);
+    opts.appendChild(btn);
+  });
+}
+
+function answerOdd(i, btn, q) {
+  document.querySelectorAll('#odd-opts .quiz-opt').forEach(b => b.onclick = null);
+  stats.total++;
+  if (i === q.correct) {
+    btn.classList.add('correct');
+    stats.correct++;
+    showToast('✅ Правильно!');
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#odd-opts .quiz-opt')[q.correct].classList.add('correct');
+  }
+  const exp = document.getElementById('odd-explain');
+  exp.textContent = '💡 ' + q.explain;
+  exp.style.display = 'block';
+  document.getElementById('odd-next').style.display = 'block';
+  saveStats(); updateStatUI();
+}
+
+function nextOdd() {
+  oddIdx = (oddIdx + 1) % oddData.length;
+  showOdd();
+}
+
+// ════════════════════════════════
+// МАПА
+// ════════════════════════════════
+const oblasts = [
+  {name:'Київська', icon:'🏛️', fact:'Столична область. Київ — одне з найстаріших міст Європи, засноване у V-VI ст.'},
+  {name:'Львівська', icon:'🦁', fact:'Серце Галичини. Місто кави, шоколаду та дивовижної архітектури.'},
+  {name:'Одеська', icon:'⚓', fact:'Перлина у Чорного моря. Гумор, гостинність і знамениті Потьомкінські сходи.'},
+  {name:'Харківська', icon:'🎓', fact:'Перша столиця України (1917-1934). Велике студентське місто і наукова столиця.'},
+  {name:'Дніпровська', icon:'🚀', fact:'Промисловий гігант. Тут виробляли ракети — "місто, якого не існувало" за СРСР.'},
+  {name:'Запорізька', icon:'⚔️', fact:'Козацький край. Острів Хортиця — серце Запорізької Січі і козацької вольниці.'},
+  {name:'Полтавська', icon:'🥣', fact:'Батьківщина галушок! Тут відбулась Полтавська битва 1709 року.'},
+  {name:'Вінницька', icon:'⛲', fact:'Вуличне мистецтво і фонтани Рошен. Тут жив і творив Михайло Коцюбинський.'},
+  {name:'Чернігівська', icon:'⛪', fact:'Стародавнє місто з церквами XI-XII ст. Один із найстаріших центрів Русі.'},
+  {name:'Закарпатська', icon:'🏔️', fact:'Карпатський рай! Гори, термальні джерела і унікальна мультикультурна спадщина.'},
+];
+
+function initMap() {
+  const grid = document.getElementById('oblast-grid');
+  grid.innerHTML = '';
+  oblasts.forEach((o, i) => {
+    const div = document.createElement('div');
+    div.className = 'oblast-card';
+    div.innerHTML = `<div class="o-icon">${o.icon}</div><div class="o-name">${o.name}</div>`;
+    div.onclick = () => showOblast(o);
+    grid.appendChild(div);
+  });
+}
+
+function showOblast(o) {
+  document.getElementById('oblast-grid').style.display = 'none';
+  const detail = document.getElementById('oblast-detail');
+  detail.classList.add('show');
+  document.getElementById('oblast-icon').textContent = o.icon;
+  document.getElementById('oblast-title').textContent = o.name + ' область';
+  document.getElementById('oblast-text').textContent = o.fact;
+}
+
+function closeOblast() {
+  document.getElementById('oblast-detail').classList.remove('show');
+  document.getElementById('oblast-grid').style.display = 'grid';
+}
+
+initMap();
+
+// ════════════════════════════════
+// ТОП (демо-дані)
+// ════════════════════════════════
+function renderTop() {
+  const demoTop = [
+    {name: userName || 'Ти', count: Math.floor(Math.random()*50)+10},
+    {name:'Тетяна', count:47},
+    {name:'Анастасія', count:23},
+    {name:'Михайло', count:18},
+    {name:'Олена', count:12},
+  ].sort((a,b) => b.count - a.count);
+
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const max = demoTop[0].count;
+  const list = document.getElementById('top-list');
+  list.innerHTML = demoTop.map((u,i) => `
+    <div class="top-item">
+      <div class="medal">${medals[i]}</div>
+      <div style="flex:1">
+        <div class="top-name">${u.name}</div>
+        <div class="top-bar"><div class="top-bar-fill" style="width:${Math.round(u.count/max*100)}%"></div></div>
+      </div>
+      <div class="top-count">${u.count} повід.</div>
+    </div>
+  `).join('');
+}
+renderTop();
+
+// ════════════════════════════════
+// ГОЛОСУВАННЯ (демо)
+// ════════════════════════════════
+const polls = [
+  {
+    q: 'Яку функцію додати в бота наступною?',
+    opts: ['🎵 Більше пісень', '🎮 Нові ігри', '📖 Більше казок', '🌿 Більше свят']
+  }
+];
+
+function renderPoll() {
+  const poll = polls[0];
+  document.getElementById('poll-q').textContent = poll.q;
+  const votes = JSON.parse(localStorage.getItem('dido_votes') || 'null') || poll.opts.map(() => Math.floor(Math.random()*20)+1);
+  localStorage.setItem('dido_votes', JSON.stringify(votes));
+  const total = votes.reduce((a,b) => a+b, 0);
+  const voted = localStorage.getItem('dido_voted');
+  const opts = document.getElementById('poll-opts');
+  opts.innerHTML = poll.opts.map((o, i) => {
+    const pct = Math.round(votes[i]/total*100);
+    return `<div class="poll-opt ${voted ? 'voted' : ''}" onclick="castVote(${i})">
+      <div class="poll-opt-top">
+        <span class="poll-opt-name">${o}</span>
+        <span class="poll-opt-pct">${voted ? pct+'%' : ''}</span>
+      </div>
+      <div class="poll-bar"><div class="poll-bar-fill" style="width:${voted ? pct : 0}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('poll-total').textContent = 'Всього голосів: ' + total;
+}
+
+function castVote(i) {
+  if (localStorage.getItem('dido_voted')) return;
+  const votes = JSON.parse(localStorage.getItem('dido_votes'));
+  votes[i]++;
+  localStorage.setItem('dido_votes', JSON.stringify(votes));
+  localStorage.setItem('dido_voted', '1');
+  showToast('✅ Твій голос враховано!');
+  if (tg) tg.HapticFeedback?.notificationOccurred('success');
+  renderPoll();
+}
+
+renderPoll();
+</script>
+</body>
+</html>
