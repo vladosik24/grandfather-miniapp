@@ -632,14 +632,16 @@ if (tg) {
   tg.expand();
 }
 const user = tg?.initDataUnsafe?.user;
-const userName = user?.first_name || 'Гість';
-const userId = user?.id || 0;
+
+// Демо-дані якщо відкрито не в Telegram
+const userName = user?.first_name || 'Тестовий';
+const userLast = user?.last_name || 'Користувач';
+const userId   = user?.id || 123456789;
 
 document.getElementById('user-name').textContent = userName;
-document.getElementById('p-name').textContent = userName + (user?.last_name ? ' ' + user.last_name : '');
-document.getElementById('p-id').textContent = 'ID: ' + (userId || '—');
+document.getElementById('p-name').textContent = userName + ' ' + userLast;
+document.getElementById('p-id').textContent = 'ID: ' + userId;
 
-// Ініціали для аватара
 const initials = userName.charAt(0).toUpperCase();
 document.getElementById('p-avatar').textContent = initials || '👤';
 
@@ -661,8 +663,8 @@ function switchTab(name, btn) {
 }
 
 // ── Локальна статистика ──
-let stats = JSON.parse(localStorage.getItem('dido_stats') || '{"games":0,"correct":0,"total":0,"words":0}');
-function saveStats() { localStorage.setItem('dido_stats', JSON.stringify(stats)); }
+let stats = {"games":0,"correct":0,"total":0,"words":0};
+function saveStats() { /* зберігаємо в пам'яті сесії */ }
 function updateStatUI() {
   document.getElementById('stat-games').textContent = stats.games;
   document.getElementById('stat-words').textContent = stats.words;
@@ -970,10 +972,10 @@ const polls = [
 function renderPoll() {
   const poll = polls[0];
   document.getElementById('poll-q').textContent = poll.q;
-  const votes = JSON.parse(localStorage.getItem('dido_votes') || 'null') || poll.opts.map(() => Math.floor(Math.random()*20)+1);
-  localStorage.setItem('dido_votes', JSON.stringify(votes));
+  if (!window._pollVotes) window._pollVotes = poll.opts.map(() => Math.floor(Math.random()*20)+1);
+  const votes = window._pollVotes;
   const total = votes.reduce((a,b) => a+b, 0);
-  const voted = localStorage.getItem('dido_voted');
+  const voted = window._pollVoted;
   const opts = document.getElementById('poll-opts');
   opts.innerHTML = poll.opts.map((o, i) => {
     const pct = Math.round(votes[i]/total*100);
@@ -989,11 +991,9 @@ function renderPoll() {
 }
 
 function castVote(i) {
-  if (localStorage.getItem('dido_voted')) return;
-  const votes = JSON.parse(localStorage.getItem('dido_votes'));
-  votes[i]++;
-  localStorage.setItem('dido_votes', JSON.stringify(votes));
-  localStorage.setItem('dido_voted', '1');
+  if (window._pollVoted) return;
+  window._pollVotes[i]++;
+  window._pollVoted = true;
   showToast('✅ Твій голос враховано!');
   if (tg) tg.HapticFeedback?.notificationOccurred('success');
   renderPoll();
