@@ -633,13 +633,14 @@ if (tg) {
 }
 const user = tg?.initDataUnsafe?.user;
 
-// Демо-дані якщо відкрито не в Telegram
+// Ім'я з Telegram або демо
 const userName = user?.first_name || 'VLADOS';
 const userLast = user?.last_name || 'BIG BOSS';
-const userId   = user?.id || 1739408129;
+const userId   = user?.id ? String(user.id) : '1739408129';
+const fullName = [userName, userLast].filter(Boolean).join(' ');
 
 document.getElementById('user-name').textContent = userName;
-document.getElementById('p-name').textContent = userName + ' ' + userLast;
+document.getElementById('p-name').textContent = fullName;
 document.getElementById('p-id').textContent = 'ID: ' + userId;
 
 const initials = userName.charAt(0).toUpperCase();
@@ -662,16 +663,39 @@ function switchTab(name, btn) {
   if (tg) tg.HapticFeedback?.impactOccurred('light');
 }
 
-// ── Локальна статистика ──
-let stats = {"games":0,"correct":0,"total":0,"words":0};
-function saveStats() { /* зберігаємо в пам'яті сесії */ }
+// ── Статистика з CloudStorage ──
+let stats = {games:0, correct:0, total:0, words:0};
+
+function saveStats() {
+  const data = JSON.stringify(stats);
+  if (tg?.CloudStorage) {
+    tg.CloudStorage.setItem('grandfather_stats', data, () => {});
+  }
+}
+
+function loadStats(cb) {
+  if (tg?.CloudStorage) {
+    tg.CloudStorage.getItem('grandfather_stats', (err, val) => {
+      if (!err && val) {
+        try { stats = Object.assign(stats, JSON.parse(val)); } catch(e) {}
+      }
+      updateStatUI();
+      if (cb) cb();
+    });
+  } else {
+    updateStatUI();
+    if (cb) cb();
+  }
+}
+
 function updateStatUI() {
   document.getElementById('stat-games').textContent = stats.games;
   document.getElementById('stat-words').textContent = stats.words;
   const pct = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   document.getElementById('stat-score').textContent = pct + '%';
 }
-updateStatUI();
+
+loadStats();
 
 // ════════════════════════════════
 // ІГРИ
