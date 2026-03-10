@@ -633,15 +633,15 @@ if (tg) {
 }
 const user = tg?.initDataUnsafe?.user;
 
-// Ім'я з Telegram або демо
-const userName = user?.first_name || 'VLADOS';
-const userLast = user?.last_name || 'BIG BOSS';
-const userId   = user?.id ? String(user.id) : '1739408129';
+// Ім'я — тільки з Telegram, без хардкоду
+const userName = user?.first_name || '👤';
+const userLast = user?.last_name  || '';
+const userId   = user?.id ? String(user.id) : '';
 const fullName = [userName, userLast].filter(Boolean).join(' ');
 
-document.getElementById('user-name').textContent = userName;
-document.getElementById('p-name').textContent = fullName;
-document.getElementById('p-id').textContent = 'ID: ' + userId;
+document.getElementById('user-name').textContent = user ? userName : 'Гість';
+document.getElementById('p-name').textContent    = user ? fullName : 'Відкрий у Telegram';
+document.getElementById('p-id').textContent      = userId ? 'ID: ' + userId : 'Не визначено';
 
 const initials = userName.charAt(0).toUpperCase();
 document.getElementById('p-avatar').textContent = initials || '👤';
