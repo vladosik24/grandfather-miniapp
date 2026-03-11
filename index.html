@@ -485,6 +485,7 @@
       <button class="btn btn-primary" onclick="startWordGame()">🔤 Вгадай слово</button>
       <button class="btn btn-yellow" onclick="startQuiz()">🇺🇦 Вікторина</button>
       <button class="btn btn-outline" onclick="startOddOne()">🧩 Хто зайвий</button>
+      <button class="btn btn-outline" style="border-color:#9b59b6;color:#9b59b6" onclick="startTod()">🎴 Правда або Дія</button>
     </div>
 
     <!-- Вгадай слово -->
@@ -537,15 +538,33 @@
         <button class="btn btn-primary" style="margin-top:8px;display:none" id="odd-next" onclick="nextOdd()">Наступне →</button>
       </div>
     </div>
+    <!-- Правда або Дія -->
+    <div id="tod-game" style="display:none">
+      <div class="card tod-card">
+        <div id="tod-badge" class="tod-badge truth">ПРАВДА</div>
+        <div class="tod-question" id="tod-question">Натисни кнопку нижче</div>
+        <div class="tod-btns">
+          <button class="btn btn-primary" onclick="pickTod('truth')" style="margin:0">🗣 Правда</button>
+          <button class="btn btn-yellow" onclick="pickTod('dare')" style="margin:0">💪 Дія</button>
+        </div>
+        <button class="btn btn-outline" style="margin-top:12px" onclick="showGameSelector()">← Назад</button>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════ ТОП ══════════ -->
   <div class="tab" id="tab-top">
-    <div class="section-title">Активність чату</div>
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Активність чату</span>
+      <button class="vote-refresh-btn" onclick="loadTop()">🔄 Оновити</button>
+    </div>
     <div class="card">
-      <div class="card-title">🏆 Топ учасників</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin:0">🏆 Топ учасників</div>
+        <div id="top-updated" style="font-size:11px;color:var(--sub)"></div>
+      </div>
       <div id="top-list">
-        <div class="empty"><span class="e-icon">📊</span>Дані завантажуються...</div>
+        <div class="empty"><span class="e-icon">📊</span>Завантаження...</div>
       </div>
     </div>
     <div class="card" style="background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff">
@@ -560,12 +579,14 @@
   <div class="tab" id="tab-map">
     <div class="section-title">Цікаві факти</div>
     <div id="oblast-detail" class="oblast-detail">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <span id="oblast-icon" style="font-size:36px">🗺</span>
+      <div class="oblast-photo" id="oblast-photo">🗺</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span id="oblast-icon" style="font-size:28px">🗺</span>
         <h3 id="oblast-title"></h3>
       </div>
       <p id="oblast-text" style="font-size:14px;line-height:1.6;color:var(--sub)"></p>
-      <button class="btn btn-outline" style="margin-top:14px" onclick="closeOblast()">← Назад</button>
+      <div class="oblast-tags" id="oblast-tags"></div>
+      <button class="btn btn-outline" style="margin-top:14px" onclick="closeOblast()">← Назад до мапи</button>
     </div>
     <div id="oblast-grid" class="map-grid"></div>
   </div>
@@ -584,37 +605,40 @@
       </div>
       <div class="stat-card">
         <div class="stat-num" id="stat-score">0%</div>
-        <div class="stat-label">Правильних відповідей</div>
+        <div class="stat-label">% правильних</div>
       </div>
       <div class="stat-card">
         <div class="stat-num" id="stat-words">0</div>
         <div class="stat-label">Слів відгадано</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num">🇺🇦</div>
-        <div class="stat-label">Українець!</div>
+        <div class="stat-num" id="stat-tod">0</div>
+        <div class="stat-label">Правда або Дія</div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">🎖️ Досягнення</div>
-      <div id="achievements">
-        <div class="top-item">
-          <span class="medal">🌱</span>
-          <div>
-            <div class="top-name">Перший крок</div>
-            <div class="top-count">Відкрив Mini App</div>
-          </div>
-        </div>
-      </div>
+      <div class="achiev-grid" id="achievements"></div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:12px;color:var(--sub);margin-bottom:8px">Улюблена гра</div>
+      <div style="font-size:24px" id="fav-game">🎮</div>
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-top:4px" id="fav-game-name">Ще не визначено</div>
     </div>
   </div>
 
   <!-- ══════════ ГОЛОСУВАННЯ ══════════ -->
   <div class="tab" id="tab-vote">
-    <div class="section-title">Поточне голосування</div>
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span><span class="vote-live-dot"></span>Живе голосування</span>
+      <button class="vote-refresh-btn" onclick="loadVote()">🔄 Оновити</button>
+    </div>
     <div class="card" id="poll-card">
-      <div class="card-title">🗳 Питання від Діда</div>
-      <div id="poll-q" style="font-size:15px;font-weight:700;margin-bottom:16px;line-height:1.5"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="card-title" style="margin:0">🗳 Питання від Діда</div>
+        <div id="vote-updated" style="font-size:11px;color:var(--sub)"></div>
+      </div>
+      <div id="poll-q" style="font-size:15px;font-weight:700;margin:12px 0 16px;line-height:1.5"></div>
       <div id="poll-opts"></div>
       <div id="poll-total" style="font-size:12px;color:var(--sub);text-align:center;margin-top:10px"></div>
     </div>
@@ -691,8 +715,51 @@ function loadStats(cb) {
 function updateStatUI() {
   document.getElementById('stat-games').textContent = stats.games;
   document.getElementById('stat-words').textContent = stats.words;
+  document.getElementById('stat-tod').textContent = stats.tod || 0;
   const pct = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   document.getElementById('stat-score').textContent = pct + '%';
+  renderAchievements();
+  renderFavGame();
+}
+
+function renderAchievements() {
+  const list = [
+    {icon:'🌱', name:'Перший крок',   desc:'Відкрив Mini App',       unlocked: true},
+    {icon:'🎮', name:'Геймер',        desc:'Зіграй 5 ігор',          unlocked: stats.games >= 5},
+    {icon:'🧠', name:'Знавець',       desc:'50% правильних відповідей', unlocked: stats.total>0 && Math.round(stats.correct/stats.total*100)>=50},
+    {icon:'📝', name:'Словник',       desc:'Відгадай 10 слів',        unlocked: stats.words >= 10},
+    {icon:'🎴', name:'Сміливець',     desc:'Зіграй у Правда або Дія', unlocked: (stats.tod||0) >= 1},
+    {icon:'🏆', name:'Чемпіон',       desc:'Зіграй 20 ігор',         unlocked: stats.games >= 20},
+    {icon:'🇺🇦', name:'Українець',    desc:'Пройди вікторину',        unlocked: stats.quizDone},
+    {icon:'⭐', name:'Зірка',         desc:'100% правильних',         unlocked: stats.total>=5 && stats.correct===stats.total},
+  ];
+  const el = document.getElementById('achievements');
+  if (!el) return;
+  el.innerHTML = list.map(a =>
+    '<div class="achiev-item ' + (a.unlocked ? 'unlocked' : 'locked') + '">' +
+    '<div class="achiev-icon">' + a.icon + '</div>' +
+    '<div class="achiev-name">' + a.name + '</div>' +
+    '<div class="achiev-desc">' + a.desc + '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function renderFavGame() {
+  const games = [
+    {key:'words', name:'Вгадай слово', icon:'🔤'},
+    {key:'quiz',  name:'Вікторина',    icon:'🇺🇦'},
+    {key:'odd',   name:'Хто зайвий',   icon:'🧩'},
+    {key:'tod',   name:'Правда або Дія',icon:'🎴'},
+  ];
+  let best = null, bestVal = 0;
+  games.forEach(g => {
+    const v = stats[g.key+'Count'] || 0;
+    if (v > bestVal) { bestVal = v; best = g; }
+  });
+  if (best) {
+    document.getElementById('fav-game').textContent = best.icon;
+    document.getElementById('fav-game-name').textContent = best.name + ' (' + bestVal + ' разів)';
+  }
 }
 
 loadStats();
@@ -706,6 +773,7 @@ function showGameSelector() {
   document.getElementById('word-game').style.display = 'none';
   document.getElementById('quiz-game').style.display = 'none';
   document.getElementById('odd-game').style.display = 'none';
+  document.getElementById('tod-game').style.display = 'none';
 }
 
 // ── Вгадай слово ──
@@ -915,16 +983,31 @@ function nextOdd() {
 // МАПА
 // ════════════════════════════════
 const oblasts = [
-  {name:'Київська', icon:'🏛️', fact:'Столична область. Київ — одне з найстаріших міст Європи, засноване у V-VI ст.'},
-  {name:'Львівська', icon:'🦁', fact:'Серце Галичини. Місто кави, шоколаду та дивовижної архітектури.'},
-  {name:'Одеська', icon:'⚓', fact:'Перлина у Чорного моря. Гумор, гостинність і знамениті Потьомкінські сходи.'},
-  {name:'Харківська', icon:'🎓', fact:'Перша столиця України (1917-1934). Велике студентське місто і наукова столиця.'},
-  {name:'Дніпровська', icon:'🚀', fact:'Промисловий гігант. Тут виробляли ракети — "місто, якого не існувало" за СРСР.'},
-  {name:'Запорізька', icon:'⚔️', fact:'Козацький край. Острів Хортиця — серце Запорізької Січі і козацької вольниці.'},
-  {name:'Полтавська', icon:'🥣', fact:'Батьківщина галушок! Тут відбулась Полтавська битва 1709 року.'},
-  {name:'Вінницька', icon:'⛲', fact:'Вуличне мистецтво і фонтани Рошен. Тут жив і творив Михайло Коцюбинський.'},
-  {name:'Чернігівська', icon:'⛪', fact:'Стародавнє місто з церквами XI-XII ст. Один із найстаріших центрів Русі.'},
-  {name:'Закарпатська', icon:'🏔️', fact:'Карпатський рай! Гори, термальні джерела і унікальна мультикультурна спадщина.'},
+  {name:'Київська',        icon:'🏛️', bg:'#1a3a6e', fact:'Столична область. Київ — одне з найстаріших міст Європи, засноване у V–VI ст. Тут Хрещення Русі, Лавра, Майдан.',         tags:['Столиця','Культура','Архітектура']},
+  {name:'Львівська',       icon:'🦁', bg:'#8b4513', fact:'Серце Галичини. Місто кави, шоколаду та дивовижної архітектури. Щороку приймає мільйони туристів.',                         tags:['Кава','Туризм','Архітектура']},
+  {name:'Одеська',         icon:'⚓', bg:'#006994', fact:'Перлина Чорного моря. Гумор, гостинність і знамениті Потьомкінські сходи. Найбільший морський порт України.',               tags:['Море','Порт','Гумор']},
+  {name:'Харківська',      icon:'🎓', bg:'#2d1b69', fact:'Перша столиця України (1917–1934). Найбільше студентське місто з понад 40 університетами.',                                  tags:['Наука','Університети','Промисловість']},
+  {name:'Дніпровська',     icon:'🚀', bg:'#1a1a2e', fact:'Промисловий гігант. Тут виробляли ракети і космічні апарати — "місто, якого не існувало" в часи СРСР.',                     tags:['Ракети','Промисловість','Дніпро']},
+  {name:'Запорізька',      icon:'⚔️', bg:'#4a1c1c', fact:'Козацький край. Острів Хортиця — серце Запорізької Січі. Тут найбільша в Україні ГЕС — ДніпроГЕС.',                        tags:['Козаки','Хортиця','Сталь']},
+  {name:'Полтавська',      icon:'🥣', bg:'#2d4a1e', fact:'Батьківщина галушок і Гоголя! Тут відбулась Полтавська битва 1709 р. Велика нафтова і газова промисловість.',               tags:['Галушки','Гоголь','Битва 1709']},
+  {name:'Вінницька',       icon:'⛲', bg:'#1a4a2e', fact:'Місто фонтанів Рошен на Південному Бузі. Штаб-квартира армії УНР. Батьківщина Михайла Коцюбинського.',                      tags:['Фонтани','Коцюбинський','АПК']},
+  {name:'Чернігівська',    icon:'⛪', bg:'#2e1a4a', fact:'Одне з найстаріших міст України. Церкви XI–XII ст. Тут правили легендарні князі — Чорний і Мстислав.',                      tags:['Давнина','Церкви','Природа']},
+  {name:'Закарпатська',    icon:'🏔️', bg:'#1a3a1a', fact:'Єдина область за Карпатами. Гори, термальні джерела, угорська й румунська меншини. Центр туризму.',                        tags:['Карпати','Гори','Термальні води']},
+  {name:'Івано-Франківська',icon:'🌲',bg:'#2a4a1a', fact:'Карпатський рай. Тут Говерла — найвища точка України (2061 м). Місто Івано-Франківськ — колишній Станіслав.',               tags:['Говерла','Карпати','Туризм']},
+  {name:'Тернопільська',   icon:'🏰', bg:'#3a2a1a', fact:'Замкова країна — понад 100 замків і фортець. Озеро Гусятин, Бучацький замок. Серце Галичини.',                              tags:['Замки','Галичина','Туризм']},
+  {name:'Хмельницька',     icon:'🌻', bg:'#1a2a4a', fact:'Поділля — земля соняшників і чорноземів. Кам\'янець-Подільський — фортеця на скелі, один із найкрасивіших замків Європи.', tags:['Кам\'янець','Замок','Поділля']},
+  {name:'Черкаська',       icon:'🌊', bg:'#004a4a', fact:'Серце козацтва. Чигирин — перша столиця Гетьманщини. Канів — могила Тараса Шевченка.',                                       tags:['Шевченко','Козаки','Дніпро']},
+  {name:'Кіровоградська',  icon:'🌾', bg:'#3a3a1a', fact:'Центральна Україна. Найменше населена область. Батьківщина Карпенка-Карого і першого в Україні аеропорту.',                 tags:['Степ','Центр','Сільгосп']},
+  {name:'Миколаївська',    icon:'⛵', bg:'#003a5a', fact:'Корабельна столиця України. Тут будували лінкори Чорноморського флоту. Серце суднобудування.',                              tags:['Кораблі','Чорне море','Суднобудування']},
+  {name:'Херсонська',      icon:'🍉', bg:'#4a1a00', fact:'Батьківщина кавунів! Дельта Дніпра, Олешківські піски — найбільша пустеля Європи. Херсон заснував Потьомкін.',             tags:['Кавуни','Дніпро','Степ']},
+  {name:'Житомирська',     icon:'🍓', bg:'#2a1a3a', fact:'Полісся — ліси, болота, суниці. Батьківщина Сергія Корольова — конструктора першого супутника і ракет.',                    tags:['Поліся','Корольов','Ліси']},
+  {name:'Сумська',         icon:'🎶', bg:'#1a3a2a', fact:'Слобожанщина на кордоні з Росією. Батьківщина Панаса Мирного і Сковороди. Ромни — давнє торгове місто.',                    tags:['Слобожанщина','Культура','Кордон']},
+  {name:'Луганська',       icon:'🔥', bg:'#4a2a1a', fact:'Донбас — вугілля і сталь. Луганськ заснований 1795 р. Нині більша частина окупована Росією. Борються!',                    tags:['Донбас','Спротив','Вугілля']},
+  {name:'Донецька',        icon:'⛏️', bg:'#2a1a1a', fact:'Промислове серце — вугілля, метал, хімія. Маріуполь — місто героїв. Нині окупована, але незламна!',                         tags:['Маріуполь','Донбас','Спротив']},
+  {name:'Рівненська',      icon:'🌿', bg:'#1a4a1a', fact:'Волинське Полісся. Тут Рівненська АЕС. Дубно — місто з 900-річною фортецею. Бурштиновий край.',                            tags:['Поліся','Бурштин','АЕС']},
+  {name:'Волинська',       icon:'🦅', bg:'#1a1a4a', fact:'Волинь — найзахідніша північ України. Луцький замок Любарта. Шацькі озера — найчистіші в Україні.',                         tags:['Шацькі озера','Замки','Поліся']},
+  {name:'Чернівецька',     icon:'🌹', bg:'#4a1a3a', fact:'Маленька, але колоритна! Чернівці — "маленька Відень". Буковинський університет — у списку ЮНЕСКО.',                        tags:['Буковина','ЮНЕСКО','Різноманіття']},
+  {name:'АР Крим',         icon:'🌊', bg:'#5a1a1a', fact:'Тимчасово окупований Росією з 2014 р. Херсонес, Бахчисарай, Ялта — перлини України. Крим — це Україна! 🇺🇦',              tags:['Окупований','Спротив','Україна']},
 ];
 
 function initMap() {
@@ -943,9 +1026,19 @@ function showOblast(o) {
   document.getElementById('oblast-grid').style.display = 'none';
   const detail = document.getElementById('oblast-detail');
   detail.classList.add('show');
+  const photo = document.getElementById('oblast-photo');
+  photo.textContent = o.icon;
+  photo.style.background = 'linear-gradient(135deg,' + o.bg + ', #1a56c4)';
+  photo.style.fontSize = '64px';
+  photo.style.display = 'flex';
+  photo.style.alignItems = 'center';
+  photo.style.justifyContent = 'center';
   document.getElementById('oblast-icon').textContent = o.icon;
   document.getElementById('oblast-title').textContent = o.name + ' область';
   document.getElementById('oblast-text').textContent = o.fact;
+  const tags = document.getElementById('oblast-tags');
+  tags.innerHTML = (o.tags||[]).map(t => '<span class="oblast-tag">' + t + '</span>').join('');
+  if (tg) tg.HapticFeedback?.impactOccurred('light');
 }
 
 function closeOblast() {
@@ -958,72 +1051,180 @@ initMap();
 // ════════════════════════════════
 // ТОП (демо-дані)
 // ════════════════════════════════
-function renderTop() {
-  const demoTop = [
-    {name: userName || 'Ти', count: Math.floor(Math.random()*50)+10},
-    {name:'Тетяна', count:47},
-    {name:'Анастасія', count:23},
-    {name:'Михайло', count:18},
-    {name:'Олена', count:12},
-  ].sort((a,b) => b.count - a.count);
-
-  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-  const max = demoTop[0].count;
-  const list = document.getElementById('top-list');
-  list.innerHTML = demoTop.map((u,i) => `
-    <div class="top-item">
-      <div class="medal">${medals[i]}</div>
-      <div style="flex:1">
-        <div class="top-name">${u.name}</div>
-        <div class="top-bar"><div class="top-bar-fill" style="width:${Math.round(u.count/max*100)}%"></div></div>
-      </div>
-      <div class="top-count">${u.count} повід.</div>
-    </div>
-  `).join('');
-}
-renderTop();
-
 // ════════════════════════════════
-// ГОЛОСУВАННЯ (демо)
+// ПРАВДА АБО ДІЯ
 // ════════════════════════════════
-const polls = [
-  {
-    q: 'Яку функцію додати в бота наступною?',
-    opts: ['🎵 Більше пісень', '🎮 Нові ігри', '📖 Більше казок', '🌿 Більше свят']
-  }
+const todTruths = [
+  'Яка твоя найбільша мрія в житті? 🌟',
+  'Що тебе найбільше дратує в людях? 😤',
+  'Яку пісню ти слухаєш коли сумно? 🎵',
+  'Яка твоя найдивніша звичка? 🤔',
+  'Кому з чату ти найбільше довіряєш? 🤝',
+  'Що ти зробив би якби мав мільйон? 💰',
+  'Яку помилку в житті ти хотів би виправити? ⏰',
+  'Що думаєш про себе, але нікому не кажеш? 🤫',
+  'Хто тебе надихає найбільше? ✨',
+  'Яке у тебе таємне вміння? 🎭',
+  'Якою мовою ти думаєш? 🧠',
+  'Що змусило тебе сміятись останнім часом? 😂',
 ];
 
-function renderPoll() {
-  const poll = polls[0];
+const todDares = [
+  'Напиши компліментів усім у чаті! 💬',
+  'Розкажи анекдот прямо зараз! 🃏',
+  'Напиши повідомлення тільки emoji (мінімум 10)! 🎨',
+  'Признайся в чомусь смішному що з тобою було! 😄',
+  'Напиши улюблений рецепт страви! 🍲',
+  'Розкажи свою улюблену українську традицію! 🇺🇦',
+  'Напиши вірш з 4 рядків прямо зараз! ✍️',
+  'Розкажи свій найдивніший сон! 🌙',
+  'Напиши 5 речей за які ти вдячний сьогодні! 🌻',
+  'Зроби прогноз — що буде в Україні через 10 років? 🔮',
+];
+
+function startTod() {
+  document.getElementById('game-selector').style.display = 'none';
+  document.getElementById('tod-game').style.display = 'block';
+  document.getElementById('tod-question').textContent = 'Натисни "Правда" або "Дія" щоб отримати завдання! 👇';
+  document.getElementById('tod-badge').textContent = '🎴 ПРАВДА або ДІЯ';
+  document.getElementById('tod-badge').className = 'tod-badge truth';
+  if (tg) tg.HapticFeedback?.impactOccurred('medium');
+}
+
+function pickTod(type) {
+  const list = type === 'truth' ? todTruths : todDares;
+  const q = list[Math.floor(Math.random() * list.length)];
+  const badge = document.getElementById('tod-badge');
+  badge.textContent = type === 'truth' ? '🗣 ПРАВДА' : '💪 ДІЯ';
+  badge.className = 'tod-badge ' + type;
+  document.getElementById('tod-question').textContent = q;
+  if (tg) tg.HapticFeedback?.impactOccurred('light');
+  // Статистика
+  stats.tod = (stats.tod || 0) + 1;
+  stats.todCount = (stats.todCount || 0) + 1;
+  stats.games++;
+  saveStats(); updateStatUI();
+}
+
+function loadTop() {
+  const list = document.getElementById('top-list');
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">⏳ Завантаження...</div>';
+  // Спроба отримати реальні дані через CloudStorage
+  if (tg?.CloudStorage) {
+    tg.CloudStorage.getItem('top_data', (err, val) => {
+      if (!err && val) {
+        try {
+          renderTop(JSON.parse(val));
+          return;
+        } catch(e) {}
+      }
+      renderTop(null);
+    });
+  } else {
+    renderTop(null);
+  }
+}
+
+function renderTop(data) {
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣'];
+  const topData = data || [
+    {name: userName || 'Ти', count: 42},
+    {name:'Тетяна', count:38},
+    {name:'Михайло', count:25},
+    {name:'Анастасія', count:17},
+    {name:'Олена', count:12},
+  ];
+  const max = Math.max(...topData.map(u => u.count));
+  const list = document.getElementById('top-list');
+  const now = new Date().toLocaleTimeString('uk-UA', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('top-updated').textContent = 'оновлено ' + now;
+  list.innerHTML = topData.slice(0,7).map((u,i) => {
+    const isMe = u.name === userName;
+    return '<div class="top-item" style="' + (isMe ? 'background:#e8f0ff;border-radius:12px;padding:6px;margin:-4px' : '') + '">' +
+      '<div class="medal">' + (medals[i]||'·') + '</div>' +
+      '<div style="flex:1">' +
+        '<div class="top-name">' + u.name + (isMe ? ' 👈' : '') + '</div>' +
+        '<div class="top-bar"><div class="top-bar-fill" style="width:' + Math.round(u.count/max*100) + '%"></div></div>' +
+      '</div>' +
+      '<div class="top-count">' + u.count + ' повід.</div>' +
+    '</div>';
+  }).join('');
+}
+loadTop();
+
+// ════════════════════════════════
+// ГОЛОСУВАННЯ — жива версія
+// ════════════════════════════════
+let currentPoll = null;
+
+function loadVote() {
+  const now = new Date().toLocaleTimeString('uk-UA', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('vote-updated').textContent = now;
+  // Читаємо з CloudStorage якщо є
+  if (tg?.CloudStorage) {
+    tg.CloudStorage.getItem('vote_data', (err, val) => {
+      if (!err && val) {
+        try {
+          const vd = JSON.parse(val);
+          renderPoll(vd);
+          return;
+        } catch(e) {}
+      }
+      renderDefaultPoll();
+    });
+  } else {
+    renderDefaultPoll();
+  }
+}
+
+function renderDefaultPoll() {
+  renderPoll({
+    q: 'Що додати в бота наступним?',
+    opts: ['🎮 Нові ігри','🎵 Пісні','📖 Казки','🌿 Свята'],
+    votes: [12,8,15,6],
+    voted: null
+  });
+}
+
+function renderPoll(poll) {
+  currentPoll = poll;
   document.getElementById('poll-q').textContent = poll.q;
-  if (!window._pollVotes) window._pollVotes = poll.opts.map(() => Math.floor(Math.random()*20)+1);
-  const votes = window._pollVotes;
+  const myVote = window._myVote;
+  const votes = poll.votes || poll.opts.map(() => Math.floor(Math.random()*15)+3);
   const total = votes.reduce((a,b) => a+b, 0);
-  const voted = window._pollVoted;
+  const voted = myVote !== undefined;
   const opts = document.getElementById('poll-opts');
   opts.innerHTML = poll.opts.map((o, i) => {
-    const pct = Math.round(votes[i]/total*100);
-    return `<div class="poll-opt ${voted ? 'voted' : ''}" onclick="castVote(${i})">
-      <div class="poll-opt-top">
-        <span class="poll-opt-name">${o}</span>
-        <span class="poll-opt-pct">${voted ? pct+'%' : ''}</span>
-      </div>
-      <div class="poll-bar"><div class="poll-bar-fill" style="width:${voted ? pct : 0}%"></div></div>
-    </div>`;
+    const pct = total > 0 ? Math.round(votes[i]/total*100) : 0;
+    const isChosen = voted && myVote === i;
+    return '<div class="poll-opt ' + (voted ? 'voted' : '') + '" onclick="castVote(' + i + ')" style="' + (isChosen ? 'border-color:var(--blue);background:#e8f0ff' : '') + '">' +
+      '<div class="poll-opt-top">' +
+        '<span class="poll-opt-name">' + o + (isChosen ? ' ✓' : '') + '</span>' +
+        '<span class="poll-opt-pct">' + (voted ? pct+'%' : '') + '</span>' +
+      '</div>' +
+      '<div class="poll-bar"><div class="poll-bar-fill" style="width:' + (voted ? pct : 0) + '%"></div></div>' +
+    '</div>';
   }).join('');
-  document.getElementById('poll-total').textContent = 'Всього голосів: ' + total;
+  document.getElementById('poll-total').textContent = 'Всього голосів: ' + total + (voted ? ' · Ти проголосував!' : ' · Натисни щоб проголосувати');
 }
 
 function castVote(i) {
-  if (window._pollVoted) return;
-  window._pollVotes[i]++;
-  window._pollVoted = true;
-  showToast('✅ Твій голос враховано!');
+  if (window._myVote !== undefined) { showToast('Ти вже проголосував!'); return; }
+  window._myVote = i;
+  if (currentPoll) currentPoll.votes[i]++;
+  showToast('✅ Голос враховано!');
   if (tg) tg.HapticFeedback?.notificationOccurred('success');
-  renderPoll();
+  renderPoll(currentPoll);
+  // Зберігаємо в CloudStorage
+  if (tg?.CloudStorage && currentPoll) {
+    tg.CloudStorage.setItem('vote_data', JSON.stringify(currentPoll), ()=>{});
+    tg.CloudStorage.setItem('my_vote_' + (currentPoll.q||'').slice(0,20), String(i), ()=>{});
+  }
 }
 
-renderPoll();
+loadVote();
+// Автооновлення кожні 30 секунд
+setInterval(() => { if (document.getElementById('tab-vote').classList.contains('active')) loadVote(); }, 30000);
 </script>
 </body>
 </html>
