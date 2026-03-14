@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🎮 Ігри Діда</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+  :root {
+    --bg:        #0f0e17;
+    --surface:   #1a1a2e;
+    --card:      #16213e;
+    --border:    #0f3460;
+    --gold:      #e2b96f;
+    --gold2:     #f5d08a;
+    --blue:      #4a9eff;
+    --green:     #4ade80;
+    --red:       #f87171;
+    --text:      #e8e0d5;
+    --muted:     #8a7f72;
+    --radius:    14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 20% 20%, #1a0a3a44 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, #0a1a3a44 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 12px;
+    display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-back {
+    background: none; border: none; color: var(--gold); font-size: 22px;
+    cursor: pointer; padding: 4px; display: none;
+  }
+  .header-title { font-size: 18px; font-weight: bold; color: var(--gold); letter-spacing: .5px; }
+  .header-sub   { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px; max-width: 480px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* GAME LOBBY */
+  .game-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-top: 8px;
+  }
+  .game-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative; overflow: hidden;
+  }
+  .game-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 60%, var(--gold)11);
+    opacity: 0; transition: opacity .2s;
+  }
+  .game-card:active { transform: scale(.97); }
+  .game-card:active::before { opacity: 1; }
+  .game-icon { font-size: 40px; margin-bottom: 8px; }
+  .game-name { font-size: 14px; font-weight: bold; color: var(--gold); }
+  .game-desc { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .game-badge {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--green); color: #000;
+    font-size: 9px; font-weight: bold;
+    padding: 2px 6px; border-radius: 20px;
+  }
+
+  /* ROOM SCREEN */
+  .room-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px; margin-bottom: 14px;
+  }
+  .room-title { font-size: 13px; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .room-code {
+    font-size: 36px; font-weight: bold; color: var(--gold2);
+    text-align: center; letter-spacing: 8px;
+    font-family: 'Courier New', monospace;
+    padding: 16px; background: var(--bg);
+    border-radius: 10px; margin: 10px 0;
+    cursor: pointer; transition: background .2s;
+  }
+  .room-code:active { background: #1a1a2e; }
+  .room-hint { font-size: 12px; color: var(--muted); text-align: center; }
+
+  .input-row { display: flex; gap: 8px; margin-top: 10px; }
+  input[type=text] {
+    flex: 1; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    color: var(--text); font-size: 18px; font-family: 'Courier New', monospace;
+    letter-spacing: 4px; text-align: center; text-transform: uppercase;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: var(--gold); }
+  input[type=text]::placeholder { letter-spacing: 1px; font-size: 13px; color: var(--muted); }
+
+  /* BUTTONS */
+  .btn {
+    display: block; width: 100%;
+    padding: 14px; border-radius: var(--radius);
+    font-size: 15px; font-weight: bold;
+    border: none; cursor: pointer; transition: all .2s;
+    font-family: inherit;
+  }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #1a1000;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-small {
+    width: auto; display: inline-block;
+    padding: 10px 20px; font-size: 14px;
+  }
+  .btn:active { transform: scale(.97); opacity: .9; }
+  .btn + .btn { margin-top: 10px; }
+
+  /* STATUS */
+  .status-bar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 13px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background .3s;
+  }
+  .status-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status-dot.waiting   { background: var(--gold);  animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ═══════════════ XO GAME ═══════════════ */
+  .xo-board {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 8px; margin: 16px 0;
+  }
+  .xo-cell {
+    aspect-ratio: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 42px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; transition: all .15s;
+    user-select: none;
+  }
+  .xo-cell:active { transform: scale(.92); background: var(--surface); }
+  .xo-cell.win    { background: #1a3020; border-color: var(--green); }
+  .xo-cell.disabled { cursor: default; }
+  .xo-info {
+    text-align: center; padding: 10px;
+    font-size: 14px; color: var(--gold);
+    min-height: 40px;
+  }
+  .xo-score {
+    display: flex; justify-content: space-around;
+    background: var(--card); border-radius: 12px;
+    padding: 12px; margin-bottom: 12px;
+  }
+  .score-item { text-align: center; }
+  .score-num  { font-size: 28px; font-weight: bold; color: var(--gold2); }
+  .score-label{ font-size: 11px; color: var(--muted); }
+
+  /* ═══════════════ BATTLESHIP ═══════════════ */
+  .sea-grid {
+    display: grid; grid-template-columns: repeat(10,1fr);
+    gap: 3px; margin: 8px 0;
+  }
+  .sea-cell {
+    aspect-ratio: 1;
+    background: #0a1628;
+    border: 1px solid #1a3050;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .sea-cell:active { background: #1a2638; }
+  .sea-cell.ship   { background: #1a3060; }
+  .sea-cell.hit    { background: #3a1010; }
+  .sea-cell.miss   { background: #0a1a28; opacity: .5; }
+  .sea-cell.sunk   { background: #5a1010; }
+  .sea-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+
+  .ship-panel {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 12px; background: var(--card);
+    border-radius: 12px; margin-bottom: 12px;
+  }
+  .ship-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 12px;
+    border-radius: 8px; font-size: 13px; cursor: pointer;
+  }
+  .ship-btn.selected { border-color: var(--gold); color: var(--gold); }
+
+  /* ═══════════════ DURAK ═══════════════ */
+  .cards-area {
+    min-height: 80px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    align-items: center;
+  }
+  .card {
+    width: 48px; height: 68px;
+    background: white; border-radius: 8px;
+    border: 2px solid #ddd;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: bold;
+    cursor: pointer; transition: all .15s;
+    color: #222; flex-shrink: 0;
+    box-shadow: 0 2px 6px #0008;
+    position: relative; user-select: none;
+  }
+  .card.red { color: #c00; border-color: #ffcccc; }
+  .card:active { transform: translateY(-8px); }
+  .card.selected { transform: translateY(-12px); border-color: var(--gold); }
+  .card.back {
+    background: linear-gradient(135deg, #1a3a6a, #0a1a3a);
+    border-color: var(--border); color: transparent;
+  }
+  .card-rank { font-size: 18px; line-height: 1; }
+  .card-suit { font-size: 14px; line-height: 1; }
+  .trump-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--gold);
+    border-radius: 8px; padding: 6px 12px;
+    font-size: 13px; color: var(--gold);
+  }
+
+  /* ═══════════════ QUIZ ═══════════════ */
+  .quiz-q {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    font-size: 16px; line-height: 1.5;
+    margin-bottom: 14px; min-height: 80px;
+    display: flex; align-items: center;
+  }
+  .quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px;
+    font-size: 14px; cursor: pointer; transition: all .15s;
+    text-align: left; color: var(--text);
+  }
+  .quiz-opt:active { background: var(--card); }
+  .quiz-opt.correct { background: #1a3020; border-color: var(--green); color: var(--green); }
+  .quiz-opt.wrong   { background: #3a1010; border-color: var(--red); color: var(--red); }
+  .quiz-timer {
+    text-align: center; font-size: 28px; font-weight: bold;
+    color: var(--gold2); margin-bottom: 10px;
+  }
+  .quiz-score-board {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .quiz-player-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); border-radius: 10px; padding: 10px 14px;
+  }
+
+  /* MISC */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .center  { text-align: center; }
+  .mt { margin-top: 12px; }
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 10px 20px;
+    font-size: 13px; color: var(--text);
+    z-index: 999; animation: fadeup .3s ease;
+    white-space: nowrap;
+  }
+  @keyframes fadeup { from{opacity:0;transform:translate(-50%,10px)} to{opacity:1;transform:translate(-50%,0)} }
+
+  .emoji-big { font-size: 48px; text-align: center; margin: 20px 0; }
+  .result-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    text-align: center; margin: 10px 0;
+  }
+  .result-box h2 { color: var(--gold2); font-size: 22px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <button class="header-back" id="backBtn" onclick="goBack()">←</button>
+  <div>
+    <div class="header-title" id="headerTitle">🎮 Ігри Діда</div>
+    <div class="header-sub"  id="headerSub">Мультиплеєр через PeerJS</div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: LOBBY ═══ -->
+<div class="screen active" id="s-lobby">
+  <div class="game-grid">
+    <div class="game-card" onclick="selectGame('xo')">
+      <div class="game-badge">2 гравці</div>
+      <div class="game-icon">⚔️</div>
+      <div class="game-name">Хрестики-нулики</div>
+      <div class="game-desc">Класика на 3×3</div>
+    </div>
+    <div class="game-card" onclick="selectGame('battle')">
+      <div class="game-badge">2 гравці</div>
+      <div class="game-icon">⚓</div>
+      <div class="game-name">Морський бій</div>
+      <div class="game-desc">Топи кораблі!</div>
+    </div>
+    <div class="game-card" onclick="selectGame('durak')">
+      <div class="game-badge">2 гравці</div>
+      <div class="game-icon">🃏</div>
+      <div class="game-name">Дурак</div>
+      <div class="game-desc">Карткова гра</div>
+    </div>
+    <div class="game-card" onclick="selectGame('quiz')">
+      <div class="game-badge">2+ гравці</div>
+      <div class="game-icon">🧠</div>
+      <div class="game-name">Вікторина</div>
+      <div class="game-desc">Хто швидше?</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: ROOM ═══ -->
+<div class="screen" id="s-room">
+  <div class="status-bar">
+    <div class="status-dot waiting" id="statusDot"></div>
+    <span id="statusText">Підключення...</span>
+  </div>
+
+  <div class="room-box" id="hostBox">
+    <div class="room-title">📡 Твій код кімнати</div>
+    <div class="room-code" id="roomCode" onclick="copyCode()">----</div>
+    <div class="room-hint">Натисни щоб скопіювати • Поділись з другом</div>
+    <hr class="divider">
+    <div style="font-size:13px;color:var(--muted);text-align:center">Чекаємо на гравця 2...</div>
+  </div>
+
+  <div class="room-box" id="joinBox" style="display:none">
+    <div class="room-title">🔗 Приєднатись до кімнати</div>
+    <div class="input-row">
+      <input type="text" id="joinInput" placeholder="Код кімнати" maxlength="4">
+      <button class="btn btn-gold btn-small" onclick="joinRoom()">▶</button>
+    </div>
+  </div>
+
+  <div id="waitingPlayers" style="display:none">
+    <div class="result-box">
+      <div class="emoji-big">🎮</div>
+      <h2>Готові грати!</h2>
+      <div style="color:var(--muted);font-size:14px;margin-top:6px" id="playersReady"></div>
+    </div>
+    <button class="btn btn-gold" onclick="startGame()" id="startBtn" style="display:none">🚀 Почати гру!</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: XO ═══ -->
+<div class="screen" id="s-xo">
+  <div class="xo-score">
+    <div class="score-item"><div class="score-num" id="xoScore1">0</div><div class="score-label" id="xoName1">Ти (✕)</div></div>
+    <div class="score-item"><div class="score-num" style="color:var(--muted)">:</div><div class="score-label" style="color:var(--muted)">рахунок</div></div>
+    <div class="score-item"><div class="score-num" id="xoScore2">0</div><div class="score-label" id="xoName2">Суперник (○)</div></div>
+  </div>
+  <div class="xo-info" id="xoInfo">Твій хід!</div>
+  <div class="xo-board" id="xoBoard"></div>
+  <button class="btn btn-outline mt" onclick="xoReset()">🔄 Нова партія</button>
+</div>
+
+<!-- ═══ SCREEN: BATTLE ═══ -->
+<div class="screen" id="s-battle">
+  <div id="battleSetup">
+    <div class="sea-label">🚢 Розстав кораблі (натискай клітинки)</div>
+    <div class="ship-panel" id="shipPanel">
+      <button class="ship-btn selected" data-size="4" onclick="selectShip(4)">🚢 ×1 (4)</button>
+      <button class="ship-btn" data-size="3" onclick="selectShip(3)">🛥 ×2 (3)</button>
+      <button class="ship-btn" data-size="2" onclick="selectShip(2)">⛵ ×3 (2)</button>
+      <button class="ship-btn" data-size="1" onclick="selectShip(1)">🚤 ×4 (1)</button>
+    </div>
+    <div class="sea-label">Твоє поле:</div>
+    <div class="sea-grid" id="myGrid"></div>
+    <button class="btn btn-outline mt" onclick="clearMyGrid()">🗑 Очистити</button>
+    <button class="btn btn-gold mt" onclick="battleReady()">✅ Готово!</button>
+  </div>
+  <div id="battlePlay" style="display:none">
+    <div class="status-bar"><div class="status-dot" id="battleTurnDot"></div><span id="battleTurnText">Хід суперника</span></div>
+    <div class="sea-label">🎯 Поле суперника (натискай щоб стріляти):</div>
+    <div class="sea-grid" id="enemyGrid"></div>
+    <div class="sea-label mt">🛡 Твоє поле:</div>
+    <div class="sea-grid" id="myGridPlay"></div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: DURAK ═══ -->
+<div class="screen" id="s-durak">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div>
+      <div style="font-size:12px;color:var(--muted)">Козирна масть</div>
+      <div class="trump-badge" id="trumpBadge">—</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:var(--muted)">В колоді</div>
+      <div style="font-size:20px;font-weight:bold;color:var(--gold2)" id="deckCount">—</div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Карти суперника: <span id="enemyCardCount">?</span></div>
+  <div class="cards-area" id="enemyCards"></div>
+  <div style="font-size:12px;color:var(--muted);margin:10px 0 4px">Стіл:</div>
+  <div class="cards-area" id="tableCards" style="min-height:100px"></div>
+  <div class="status-bar mt"><div class="status-dot" id="durakTurnDot"></div><span id="durakTurnText">Завантаження...</span></div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Твої карти:</div>
+  <div class="cards-area" id="myCards"></div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn btn-gold" style="flex:1" onclick="durakPlay()">▶ Кинути</button>
+    <button class="btn btn-outline" style="flex:1" onclick="durakTake()">📥 Взяти</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: QUIZ ═══ -->
+<div class="screen" id="s-quiz">
+  <div class="quiz-timer" id="quizTimer">—</div>
+  <div class="quiz-score-board" id="quizScores"></div>
+  <hr class="divider">
+  <div class="quiz-q" id="quizQ">Завантаження питання...</div>
+  <div class="quiz-opts" id="quizOpts"></div>
+  <div id="quizWaiting" style="text-align:center;color:var(--muted);font-size:13px;margin-top:12px;display:none">
+    ⏳ Чекаємо на суперника...
+  </div>
+</div>
+
+<!-- ═══ SCREEN: RESULT ═══ -->
+<div class="screen" id="s-result">
+  <div class="result-box">
+    <div class="emoji-big" id="resultEmoji">🏆</div>
+    <h2 id="resultTitle">Перемога!</h2>
+    <div style="color:var(--muted);font-size:14px;margin-top:6px" id="resultDesc"></div>
+  </div>
+  <button class="btn btn-gold mt" onclick="playAgain()">🔄 Ще раз!</button>
+  <button class="btn btn-outline mt" onclick="showScreen('s-lobby')">🏠 Вибір гри</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CORE / STATE
+// ═══════════════════════════════════════
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const ME = tg?.initDataUnsafe?.user?.first_name || 'Гравець';
+const MY_ID = String(tg?.initDataUnsafe?.user?.id || Math.random().toString(36).slice(2,8));
+
+let peer = null, conn = null;
+let isHost = false;
+let currentGame = null;
+let myName = ME, enemyName = '?';
+let screenHistory = ['s-lobby'];
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function showScreen(id, title, sub) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (title) document.getElementById('headerTitle').textContent = title;
+  if (sub)   document.getElementById('headerSub').textContent = sub;
+  document.getElementById('backBtn').style.display = id === 's-lobby' ? 'none' : 'block';
+  if (screenHistory[screenHistory.length-1] !== id) screenHistory.push(id);
+}
+function goBack() {
+  screenHistory.pop();
+  const prev = screenHistory[screenHistory.length-1] || 's-lobby';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(prev).classList.add('active');
+  document.getElementById('backBtn').style.display = prev === 's-lobby' ? 'none' : 'block';
+  if (prev === 's-lobby') { document.getElementById('headerTitle').textContent = '🎮 Ігри Діда'; document.getElementById('headerSub').textContent = 'Мультиплеєр через PeerJS'; }
+}
+function toast(msg, dur=2500) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), dur);
+}
+
+// ═══════════════════════════════════════
+// PEERJS
+// ═══════════════════════════════════════
+function makePeerId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+function selectGame(game) {
+  currentGame = game;
+  const names = {xo:'⚔️ Хрестики-нулики',battle:'⚓ Морський бій',durak:'🃏 Дурак',quiz:'🧠 Вікторина'};
+  showScreen('s-room', names[game], 'Кімната');
+  initPeer();
+}
+
+function initPeer() {
+  const code = makePeerId();
+  document.getElementById('roomCode').textContent = code;
+  setStatus('waiting', 'Очікуємо з\'єднання...');
+
+  peer = new Peer(MY_ID + '_' + code, {
+    host: '0.peerjs.com', port: 443, secure: true,
+    config: {iceServers:[{urls:'stun:stun.l.google.com:19302'}]}
+  });
+
+  peer.on('open', id => {
+    isHost = true;
+    document.getElementById('hostBox').style.display = 'block';
+    document.getElementById('joinBox').style.display = 'none';
+    setStatus('waiting', 'Чекаємо гравця 2...');
+  });
+
+  peer.on('connection', c => {
+    conn = c;
+    setupConn();
+  });
+
+  peer.on('error', e => {
+    // Якщо ID зайнятий — стаємо joiners
+    isHost = false;
+    document.getElementById('hostBox').style.display = 'none';
+    document.getElementById('joinBox').style.display = 'block';
+    setStatus('waiting', 'Введи код кімнати друга');
+  });
+}
+
+function joinRoom() {
+  const code = document.getElementById('joinInput').value.trim().toUpperCase();
+  if (code.length < 4) { toast('⚠️ Введи 4-значний код'); return; }
+
+  // Знаходимо host peer ID — перебираємо можливі варіанти
+  // Host ID = їх MY_ID + '_' + code
+  // Але ми не знаємо їх MY_ID, тому підключаємось по code
+  setStatus('waiting', 'Підключення...');
+
+  // Якщо peer ще не ініціалізований
+  if (!peer || peer.destroyed) {
+    peer = new Peer(MY_ID + '_guest', {
+      host: '0.peerjs.com', port: 443, secure: true,
+      config: {iceServers:[{urls:'stun:stun.l.google.com:19302'}]}
+    });
+  }
+
+  // Шукаємо з'єднання — host опублікує код через broadcast
+  // Простіше: host ID = code (ми генеруємо peer з ID = code)
+  toast('🔍 Шукаємо кімнату ' + code + '...');
+
+  // Перепідключаємось з правильним ID
+  peer.destroy();
+  peer = new Peer(null, {
+    host: '0.peerjs.com', port: 443, secure: true,
+    config: {iceServers:[{urls:'stun:stun.l.google.com:19302'}]}
+  });
+  peer.on('open', () => {
+    conn = peer.connect(code, {reliable:true});
+    conn.on('open', () => { setupConn(); sendMsg({type:'hello',name:ME}); });
+    conn.on('error', () => toast('❌ Кімнату не знайдено'));
+  });
+}
+
+// Спрощена версія: host peer ID = просто код
+function initPeerSimple() {
+  const code = makePeerId();
+  document.getElementById('roomCode').textContent = code;
+  setStatus('waiting', 'Очікуємо з\'єднання...');
+
+  if (peer) { try { peer.destroy(); } catch(e){} }
+
+  peer = new Peer(code, {
+    host: '0.peerjs.com', port: 443, secure: true,
+    config: {iceServers:[{urls:'stun:stun.l.google.com:19302'}]}
+  });
+
+  peer.on('open', id => {
+    isHost = true;
+    document.getElementById('hostBox').style.display = 'block';
+    document.getElementById('joinBox').style.display = 'none';
+    setStatus('waiting', 'Чекаємо гравця 2... Код: ' + code);
+  });
+
+  peer.on('connection', c => {
+    conn = c;
+    setupConn();
+    sendMsg({type:'hello', name:ME});
+  });
+
+  peer.on('error', e => {
+    // Код зайнятий — генеруємо новий
+    setTimeout(initPeerSimple, 500);
+  });
+}
+
+// Перезаписуємо selectGame
+function selectGame(game) {
+  currentGame = game;
+  const names = {xo:'⚔️ Хрестики-нулики',battle:'⚓ Морський бій',durak:'🃏 Дурак',quiz:'🧠 Вікторина'};
+  showScreen('s-room', names[game], 'Кімната');
+  initPeerSimple();
+}
+
+function joinRoomSimple() {
+  const code = document.getElementById('joinInput').value.trim().toUpperCase();
+  if (code.length < 4) { toast('⚠️ Введи 4-значний код'); return; }
+  joinRoom2(code);
+}
+// Overwrite joinRoom
+window.joinRoom = joinRoomSimple;
+
+function joinRoom2(code) {
+  setStatus('waiting', 'Підключення до ' + code + '...');
+  if (peer) { try { peer.destroy(); } catch(e){} }
+  peer = new Peer(null, {
+    host: '0.peerjs.com', port: 443, secure: true,
+    config: {iceServers:[{urls:'stun:stun.l.google.com:19302'}]}
+  });
+  peer.on('open', () => {
+    isHost = false;
+    conn = peer.connect(code, {reliable:true, metadata:{name:ME}});
+    conn.on('open', () => {
+      setStatus('connected', 'З\'єднано!');
+      setupConn();
+      sendMsg({type:'hello', name:ME});
+    });
+    conn.on('error', e => { toast('❌ Помилка з\'єднання'); setStatus('waiting', 'Спробуй ще раз'); });
+  });
+}
+
+function setupConn() {
+  conn.on('data', d => handleMsg(d));
+  conn.on('close', () => { setStatus('waiting','З\'єднання перервано'); toast('⚠️ Суперник відключився'); });
+}
+
+function sendMsg(data) {
+  if (conn && conn.open) conn.send(data);
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + state;
+  document.getElementById('statusText').textContent = text;
+}
+
+function copyCode() {
+  const code = document.getElementById('roomCode').textContent;
+  navigator.clipboard?.writeText(code).then(() => toast('✅ Код скопійовано: ' + code));
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+// ═══════════════════════════════════════
+// MESSAGE ROUTER
+// ═══════════════════════════════════════
+function handleMsg(d) {
+  if (d.type === 'hello') {
+    enemyName = d.name || '?';
+    setStatus('connected', '🟢 ' + enemyName + ' підключений');
+    document.getElementById('waitingPlayers').style.display = 'block';
+    document.getElementById('playersReady').textContent = ME + ' vs ' + enemyName;
+    if (isHost) document.getElementById('startBtn').style.display = 'block';
+    sendMsg({type:'hello', name:ME});
+    toast('🎮 ' + enemyName + ' підключився!');
+  }
+  else if (d.type === 'start') { launchGame(); }
+  else if (d.type === 'xo_move') { xoReceive(d.idx); }
+  else if (d.type === 'xo_reset') { xoInit(); }
+  else if (d.type === 'battle_ready') { battleEnemyReady(d.ships); }
+  else if (d.type === 'battle_shot') { battleReceiveShot(d.r, d.c); }
+  else if (d.type === 'battle_result') { battleReceiveResult(d.r, d.c, d.hit, d.sunk); }
+  else if (d.type === 'durak_state') { durakReceiveState(d.state); }
+  else if (d.type === 'quiz_answer') { quizEnemyAnswer(d.idx, d.time); }
+  else if (d.type === 'quiz_next') { quizNext(); }
+}
+
+function startGame() {
+  sendMsg({type:'start'});
+  launchGame();
+}
+
+function playAgain() {
+  if (currentGame === 'xo') { xoInit(); showScreen('s-xo'); }
+  else selectGame(currentGame);
+}
+
+function launchGame() {
+  if      (currentGame === 'xo')     { xoInit();     showScreen('s-xo',     '⚔️ Хрестики-нулики'); }
+  else if (currentGame === 'battle') { battleInit();  showScreen('s-battle', '⚓ Морський бій'); }
+  else if (currentGame === 'durak')  { durakInit();   showScreen('s-durak',  '🃏 Дурак'); }
+  else if (currentGame === 'quiz')   { quizInit();    showScreen('s-quiz',   '🧠 Вікторина'); }
+}
+
+// ═══════════════════════════════════════
+// XO — Хрестики-нулики
+// ═══════════════════════════════════════
+let xoBoard=[], xoMyTurn=false, xoMark='', xoEnemyMark='', xoScores=[0,0];
+const XO_WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+function xoInit() {
+  xoBoard = Array(9).fill('');
+  xoMyTurn = isHost;
+  xoMark = isHost ? '✕' : '○';
+  xoEnemyMark = isHost ? '○' : '✕';
+  document.getElementById('xoName1').textContent = ME + ' (' + xoMark + ')';
+  document.getElementById('xoName2').textContent = enemyName + ' (' + xoEnemyMark + ')';
+  document.getElementById('xoScore1').textContent = xoScores[0];
+  document.getElementById('xoScore2').textContent = xoScores[1];
+  xoRender();
+  xoSetInfo(xoMyTurn ? '✨ Твій хід!' : '⏳ Хід ' + enemyName);
+}
+
+function xoRender() {
+  const board = document.getElementById('xoBoard');
+  board.innerHTML = '';
+  xoBoard.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'xo-cell' + (val ? ' disabled' : '');
+    cell.textContent = val;
+    cell.style.color = val === xoMark ? 'var(--blue)' : 'var(--red)';
+    if (!val && xoMyTurn) cell.onclick = () => xoMove(i);
+    board.appendChild(cell);
+  });
+}
+
+function xoMove(idx) {
+  if (!xoMyTurn || xoBoard[idx]) return;
+  xoBoard[idx] = xoMark;
+  xoMyTurn = false;
+  sendMsg({type:'xo_move', idx});
+  xoRender();
+  xoCheck();
+}
+
+function xoReceive(idx) {
+  xoBoard[idx] = xoEnemyMark;
+  xoMyTurn = true;
+  xoRender();
+  xoCheck();
+}
+
+function xoCheck() {
+  for (const [a,b,c] of XO_WINS) {
+    if (xoBoard[a] && xoBoard[a]===xoBoard[b] && xoBoard[b]===xoBoard[c]) {
+      const won = xoBoard[a] === xoMark;
+      document.querySelectorAll('.xo-cell')[a].classList.add('win');
+      document.querySelectorAll('.xo-cell')[b].classList.add('win');
+      document.querySelectorAll('.xo-cell')[c].classList.add('win');
+      if (won) { xoScores[0]++; xoSetInfo('🏆 Ти переміг!'); }
+      else     { xoScores[1]++; xoSetInfo('😔 ' + enemyName + ' переміг'); }
+      document.getElementById('xoScore1').textContent = xoScores[0];
+      document.getElementById('xoScore2').textContent = xoScores[1];
+      document.querySelectorAll('.xo-cell').forEach(c => c.onclick=null);
+      return;
+    }
+  }
+  if (!xoBoard.includes('')) { xoSetInfo('🤝 Нічия!'); return; }
+  xoSetInfo(xoMyTurn ? '✨ Твій хід!' : '⏳ Хід ' + enemyName);
+}
+
+function xoSetInfo(t) { document.getElementById('xoInfo').textContent = t; }
+function xoReset() { sendMsg({type:'xo_reset'}); xoInit(); }
+
+// ═══════════════════════════════════════
+// BATTLE — Морський бій
+// ═══════════════════════════════════════
+let myShips=[], enemyShips=[], myHits=[], enemyHits=[];
+let battleMyTurn=false, battleReady1=false, battleReady2=false;
+let selectedShipSize=4;
+const SHIPS_CONFIG = [{size:4,count:1},{size:3,count:2},{size:2,count:3},{size:1,count:4}];
+
+function battleInit() {
+  myShips=[]; enemyShips=[]; myHits=[]; enemyHits=[];
+  battleMyTurn = isHost;
+  battleReady1 = battleReady2 = false;
+  document.getElementById('battleSetup').style.display='block';
+  document.getElementById('battlePlay').style.display='none';
+  renderMyGrid();
+}
+
+function renderMyGrid() {
+  const grid = document.getElementById('myGrid');
+  grid.innerHTML='';
+  for(let r=0;r<10;r++) for(let c=0;c<10;c++) {
+    const cell=document.createElement('div');
+    cell.className='sea-cell'+(hasShip(myShips,r,c)?' ship':'');
+    cell.onclick=()=>placeShip(r,c);
+    grid.appendChild(cell);
+  }
+}
+
+function hasShip(ships,r,c) { return ships.some(s=>s.some(([sr,sc])=>sr===r&&sc===c)); }
+
+function selectShip(size) {
+  selectedShipSize=size;
+  document.querySelectorAll('.ship-btn').forEach(b=>b.classList.toggle('selected',Number(b.dataset.size)===size));
+}
+
+let shipDir = 'h'; // h=horizontal
+function placeShip(r,c) {
+  const cells=[];
+  for(let i=0;i<selectedShipSize;i++) {
+    const nr=shipDir==='h'?r:r+i, nc=shipDir==='h'?c+i:c;
+    if(nr>=10||nc>=10||hasShip(myShips,nr,nc)){toast('⚠️ Не можна!');return;}
+    cells.push([nr,nc]);
+  }
+  // Перевіряємо ліміт
+  const cur=myShips.filter(s=>s.length===selectedShipSize).length;
+  const lim=SHIPS_CONFIG.find(s=>s.size===selectedShipSize)?.count||0;
+  if(cur>=lim){toast('⚠️ Вже досить кораблів цього типу');return;}
+  myShips.push(cells);
+  renderMyGrid();
+  if(myShips.length>=10) toast('✅ Всі кораблі розставлені!');
+}
+
+function clearMyGrid(){myShips=[];renderMyGrid();}
+
+function battleReady(){
+  if(myShips.length<1){toast('⚠️ Постав хоча б один корабель');return;}
+  battleReady1=true;
+  sendMsg({type:'battle_ready',ships:myShips});
+  toast('✅ Готово! Чекаємо суперника...');
+  if(battleReady2) battleStartPlay();
+}
+
+function battleEnemyReady(ships){
+  enemyShips=ships; battleReady2=true;
+  if(battleReady1) battleStartPlay();
+}
+
+function battleStartPlay(){
+  document.getElementById('battleSetup').style.display='none';
+  document.getElementById('battlePlay').style.display='block';
+  renderBattleGrids();
+  updateBattleTurn();
+}
+
+function renderBattleGrids(){
+  // Поле суперника
+  const eg=document.getElementById('enemyGrid');
+  eg.innerHTML='';
+  for(let r=0;r<10;r++) for(let c=0;c<10;c++){
+    const cell=document.createElement('div');
+    const hit=enemyHits.find(h=>h[0]===r&&h[1]===c);
+    cell.className='sea-cell'+(hit?hit[2]?' hit':' miss':'');
+    cell.textContent=hit?(hit[2]?'💥':'🌊'):'';
+    if(!hit&&battleMyTurn) cell.onclick=()=>battleShoot(r,c);
+    eg.appendChild(cell);
+  }
+  // Моє поле
+  const mg=document.getElementById('myGridPlay');
+  mg.innerHTML='';
+  for(let r=0;r<10;r++) for(let c=0;c<10;c++){
+    const cell=document.createElement('div');
+    const myH=myHits.find(h=>h[0]===r&&h[1]===c);
+    cell.className='sea-cell'+(hasShip(myShips,r,c)?' ship':'')+(myH?myH[2]?' hit':' miss':'');
+    cell.textContent=myH?(myH[2]?'💥':'🌊'):'';
+    mg.appendChild(cell);
+  }
+}
+
+function battleShoot(r,c){
+  if(!battleMyTurn)return;
+  battleMyTurn=false;
+  sendMsg({type:'battle_shot',r,c});
+  updateBattleTurn();
+}
+
+function battleReceiveShot(r,c){
+  const hit=hasShip(myShips,r,c);
+  myHits.push([r,c,hit]);
+  sendMsg({type:'battle_result',r,c,hit,sunk:false});
+  renderBattleGrids();
+  if(!hit){battleMyTurn=true;updateBattleTurn();}
+  // Перевірка поразки
+  const allSunk=myShips.every(ship=>ship.every(([sr,sc])=>myHits.some(h=>h[0]===sr&&h[1]===sc&&h[2])));
+  if(allSunk) showResult(false,'Всі кораблі потоплені!');
+}
+
+function battleReceiveResult(r,c,hit,sunk){
+  enemyHits.push([r,c,hit]);
+  renderBattleGrids();
+  if(hit){battleMyTurn=true;}
+  updateBattleTurn();
+  const allSunk=enemyShips.every(ship=>ship.every(([sr,sc])=>enemyHits.some(h=>h[0]===sr&&h[1]===sc&&h[2])));
+  if(allSunk) showResult(true,'Всі кораблі суперника потоплені!');
+}
+
+function updateBattleTurn(){
+  document.getElementById('battleTurnDot').className='status-dot'+(battleMyTurn?' connected':' waiting');
+  document.getElementById('battleTurnText').textContent=battleMyTurn?'🎯 Твій хід — стріляй!':'⏳ Хід '+enemyName;
+}
+
+// ═══════════════════════════════════════
+// DURAK — Карткова гра
+// ═══════════════════════════════════════
+const SUITS=['♠','♣','♥','♦'], RANKS=['6','7','8','9','10','J','Q','K','A'];
+const RED=['♥','♦'];
+let durakState={deck:[],myHand:[],enemyCount:0,table:[],trump:'',myTurn:false,selected:null};
+
+function makeDeck(){
+  const d=[];
+  for(const s of SUITS) for(const r of RANKS) d.push({r,s,v:RANKS.indexOf(r)});
+  return d.sort(()=>Math.random()-.5);
+}
+
+function durakInit(){
+  if(!isHost)return; // Host роздає карти
+  const deck=makeDeck();
+  const trump=deck[deck.length-1].s;
+  const hand1=deck.splice(0,6), hand2=deck.splice(0,6);
+  durakState={deck,myHand:hand1,enemyCount:6,table:[],trump,myTurn:true,selected:null};
+  sendMsg({type:'durak_state',state:{deck,myHand:hand2,enemyCount:6,table:[],trump,myTurn:false,selected:null}});
+  durakRender();
+}
+
+function durakReceiveState(state){
+  durakState=state;
+  durakRender();
+}
+
+function durakRender(){
+  const s=durakState;
+  document.getElementById('trumpBadge').textContent='Козир: '+s.trump;
+  document.getElementById('deckCount').textContent=s.deck?.length||0;
+  document.getElementById('enemyCardCount').textContent=s.enemyCount||'?';
+  // Карти суперника (сорочкою)
+  const ec=document.getElementById('enemyCards');
+  ec.innerHTML='';
+  for(let i=0;i<(s.enemyCount||0);i++){const c=document.createElement('div');c.className='card back';ec.appendChild(c);}
+  // Стіл
+  const tc=document.getElementById('tableCards');
+  tc.innerHTML='';
+  (s.table||[]).forEach(c=>{const el=document.createElement('div');el.className='card'+(RED.includes(c.s)?' red':'');el.innerHTML='<div class="card-rank">'+c.r+'</div><div class="card-suit">'+c.s+'</div>';tc.appendChild(el);});
+  // Мої карти
+  const mc=document.getElementById('myCards');
+  mc.innerHTML='';
+  (s.myHand||[]).forEach((c,i)=>{
+    const el=document.createElement('div');
+    el.className='card'+(RED.includes(c.s)?' red':'')+(s.selected===i?' selected':'');
+    el.innerHTML='<div class="card-rank">'+c.r+'</div><div class="card-suit">'+c.s+'</div>';
+    el.onclick=()=>{durakState.selected=durakState.selected===i?null:i;durakRender();};
+    mc.appendChild(el);
+  });
+  // Хід
+  document.getElementById('durakTurnDot').className='status-dot'+(s.myTurn?' connected':' waiting');
+  document.getElementById('durakTurnText').textContent=s.myTurn?'✨ Твій хід!':'⏳ Хід '+enemyName;
+}
+
+function durakPlay(){
+  const s=durakState;
+  if(!s.myTurn||s.selected===null)return;
+  const card=s.myHand[s.selected];
+  s.table.push(card);
+  s.myHand.splice(s.selected,1);
+  s.selected=null; s.myTurn=false;
+  sendMsg({type:'durak_state',state:{...s,myTurn:true,enemyCount:s.myHand.length}});
+  durakRender();
+}
+
+function durakTake(){
+  const s=durakState;
+  if(s.myTurn)return;
+  s.myHand.push(...s.table);
+  s.table=[]; s.myTurn=false;
+  sendMsg({type:'durak_state',state:{...s,myTurn:true,enemyCount:s.myHand.length}});
+  durakRender();
+  toast('📥 Ти взяв карти');
+}
+
+// ═══════════════════════════════════════
+// QUIZ — Вікторина
+// ═══════════════════════════════════════
+const QUESTIONS=[
+  {q:'Столиця України?',opts:['Київ','Харків','Львів','Одеса'],a:0},
+  {q:'Хто написав «Кобзар»?',opts:['Франко','Шевченко','Леся Українка','Гоголь'],a:1},
+  {q:'Яка річка найдовша в Україні?',opts:['Дніпро','Дністер','Десна','Прут'],a:0},
+  {q:'Символ України — яка рослина?',opts:['Калина','Соняшник','Верба','Дуб'],a:1},
+  {q:'Коли Україна стала незалежною?',opts:['1990','1991','1992','1989'],a:1},
+  {q:'Яка гора найвища в Україні?',opts:['Піп Іван','Говерла','Петрос','Бребенескул'],a:1},
+  {q:'Яке море на півдні України?',opts:['Каспійське','Балтійське','Чорне','Середземне'],a:2},
+  {q:'Хто написав «Лісову пісню»?',opts:['Франко','Шевченко','Леся Українка','Коцюбинський'],a:2},
+  {q:'Козацька столиця на острові?',opts:['Хортиця','Зміїний','Хасан','Криму'],a:0},
+  {q:'Скільки областей в Україні?',opts:['24','25','26','23'],a:1},
+];
+let quizIdx=0, quizScoreMe=0, quizScoreEnemy=0, quizAnswered=false, quizTimer=null, quizTimeLeft=10, quizEnemyAns=null;
+
+function quizInit(){quizIdx=0;quizScoreMe=0;quizScoreEnemy=0;quizShowQ();}
+
+function quizShowQ(){
+  quizAnswered=false; quizEnemyAns=null; quizTimeLeft=10;
+  clearInterval(quizTimer);
+  const q=QUESTIONS[quizIdx%QUESTIONS.length];
+  document.getElementById('quizQ').textContent=q.q;
+  document.getElementById('quizWaiting').style.display='none';
+  const opts=document.getElementById('quizOpts');
+  opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='quiz-opt'; btn.textContent=o;
+    btn.onclick=()=>quizAnswer(i);
+    opts.appendChild(btn);
+  });
+  quizUpdateScores();
+  quizTimer=setInterval(()=>{
+    quizTimeLeft--;
+    document.getElementById('quizTimer').textContent=quizTimeLeft+'с';
+    if(quizTimeLeft<=0){clearInterval(quizTimer);if(!quizAnswered)quizAnswer(-1);}
+  },1000);
+  document.getElementById('quizTimer').textContent='10с';
+}
+
+function quizAnswer(idx){
+  if(quizAnswered)return;
+  quizAnswered=true;
+  clearInterval(quizTimer);
+  const q=QUESTIONS[quizIdx%QUESTIONS.length];
+  const correct=q.a;
+  const opts=document.getElementById('quizOpts').children;
+  for(let i=0;i<opts.length;i++){
+    opts[i].classList.toggle('correct',i===correct);
+    opts[i].classList.toggle('wrong',i===idx&&idx!==correct);
+    opts[i].onclick=null;
+  }
+  if(idx===correct) quizScoreMe++;
+  sendMsg({type:'quiz_answer',idx,time:quizTimeLeft});
+  document.getElementById('quizWaiting').style.display='block';
+  quizUpdateScores();
+  if(quizEnemyAns!==null) quizProceed();
+}
+
+function quizEnemyAnswer(idx,time){
+  quizEnemyAns={idx,time};
+  const q=QUESTIONS[quizIdx%QUESTIONS.length];
+  if(idx===q.a) quizScoreEnemy++;
+  quizUpdateScores();
+  if(quizAnswered) quizProceed();
+}
+
+function quizProceed(){
+  quizIdx++;
+  if(quizIdx>=QUESTIONS.length){
+    if(quizScoreMe>quizScoreEnemy) showResult(true,'Рахунок '+quizScoreMe+':'+quizScoreEnemy);
+    else if(quizScoreMe<quizScoreEnemy) showResult(false,'Рахунок '+quizScoreMe+':'+quizScoreEnemy);
+    else showResult(null,'Нічия! '+quizScoreMe+':'+quizScoreEnemy);
+    return;
+  }
+  sendMsg({type:'quiz_next'});
+  setTimeout(quizShowQ, 1500);
+}
+function quizNext(){setTimeout(quizShowQ,1500);}
+
+function quizUpdateScores(){
+  document.getElementById('quizScores').innerHTML=
+    '<div class="quiz-player-row"><span>'+ME+'</span><strong style="color:var(--gold2)">'+quizScoreMe+'</strong></div>'+
+    '<div class="quiz-player-row"><span>'+enemyName+'</span><strong style="color:var(--gold2)">'+quizScoreEnemy+'</strong></div>';
+}
+
+// ═══════════════════════════════════════
+// RESULT
+// ═══════════════════════════════════════
+function showResult(won, desc){
+  const emoji=won===true?'🏆':won===false?'😔':'🤝';
+  const title=won===true?'Перемога!':won===false?'Поразка':' Нічия';
+  document.getElementById('resultEmoji').textContent=emoji;
+  document.getElementById('resultTitle').textContent=title;
+  document.getElementById('resultDesc').textContent=desc||'';
+  showScreen('s-result','🎮 Результат');
+  tg?.HapticFeedback?.notificationOccurred(won?'success':'error');
+}
+</script>
+</body>
+</html>
